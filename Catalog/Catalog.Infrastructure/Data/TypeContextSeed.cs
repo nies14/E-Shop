@@ -2,71 +2,44 @@ using Catalog.Core.Entities;
 using MongoDB.Driver;
 using System.Text.Json;
 
-namespace Catalog.Infrastructure.Data
+namespace Catalog.Infrastructure.Data;
+
+public static class TypeContextSeed
 {
-    public static class TypeContextSeed
+    public static async Task SeedDataAsync(IMongoCollection<ProductType> typeCollection)
     {
-        public static void SeedData(IMongoCollection<ProductType> typeCollection)
+        bool checkTypes = await typeCollection.Find(b => true).AnyAsync();
+        
+        if (!checkTypes) 
         {
-            bool checkTypes = typeCollection.Find(b => true).Any();
-            
-            // Fix the path construction to correctly locate the seed file
-            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string projectDirectory = Directory.GetParent(baseDirectory).Parent.Parent.Parent.FullName;
-            string catalogDirectory = Directory.GetParent(projectDirectory).FullName; // Go up one more level to reach the Catalog directory
-            string filePath = Path.Combine(catalogDirectory, "Catalog.Infrastructure", "Data", "SeedData", "types.json");
-            
-            if (!checkTypes)
+            try 
             {
-                if (File.Exists(filePath))
+                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "SeedData", "types.json");
+                if (!File.Exists(path))
                 {
-                    var typesData = File.ReadAllText(filePath);
+                    // Try alternative path in development
+                    path = Path.Combine("Data", "SeedData", "types.json");
+                }
+
+                if (File.Exists(path))
+                {
+                    string typesData = await File.ReadAllTextAsync(path);
                     var types = JsonSerializer.Deserialize<List<ProductType>>(typesData);
-                    if (types != null)
+                    if (types?.Any() == true)
                     {
-                        foreach (var item in types)
-                        {
-                            typeCollection.InsertOneAsync(item);
-                        }
+                        await typeCollection.InsertManyAsync(types);
+                        Console.WriteLine($"Successfully seeded {types.Count} types");
                     }
                 }
-                else
+                else 
                 {
-                    Console.WriteLine($"Seed file not found at: {filePath}");
-                    
-                    // Try alternative paths as fallback
-                    string altPath1 = Path.Combine(projectDirectory, "Data", "SeedData", "types.json");
-                    string altPath2 = Path.Combine(Directory.GetCurrentDirectory(), "Data", "SeedData", "types.json");
-                    
-                    Console.WriteLine($"Trying alternative paths:\n{altPath1}\n{altPath2}");
-                    
-                    if (File.Exists(altPath1))
-                    {
-                        Console.WriteLine($"Found at alternative path 1: {altPath1}");
-                        var typesData = File.ReadAllText(altPath1);
-                        var types = JsonSerializer.Deserialize<List<ProductType>>(typesData);
-                        if (types != null)
-                        {
-                            foreach (var item in types)
-                            {
-                                typeCollection.InsertOneAsync(item);
-                            }
-                        }
-                    }
-                    else if (File.Exists(altPath2))
-                    {
-                        Console.WriteLine($"Found at alternative path 2: {altPath2}");
-                        var typesData = File.ReadAllText(altPath2);
-                        var types = JsonSerializer.Deserialize<List<ProductType>>(typesData);
-                        if (types != null)
-                        {
-                            foreach (var item in types)
-                            {
-                                typeCollection.InsertOneAsync(item);
-                            }
-                        }
-                    }
+                    Console.WriteLine($"Could not find types.json seed file at: {path}");
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error seeding types: {ex.Message}");
+                throw;
             }
         }
     }

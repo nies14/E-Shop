@@ -4,7 +4,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER $APP_UID
 WORKDIR /app
-EXPOSE 80
+EXPOSE 8080
 EXPOSE 443
 
 
@@ -12,30 +12,22 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Catalog.API/Catalog.API.csproj", "Catalog.API/"]
-COPY ["Catalog.Application/Catalog.Application.csproj", "Catalog.Application/"]
-COPY ["Catalog.Core/Catalog.Core.csproj", "Catalog.Core/"]
-COPY ["Catalog.Infrastructure/Catalog.Infrastructure.csproj", "Catalog.Infrastructure/"]
-RUN dotnet restore "./Catalog.API/Catalog.API.csproj"
+COPY ["Basket.API/Basket.API.csproj", "Basket.API/"]
+COPY ["Basket.Application/Basket.Application.csproj", "Basket.Application/"]
+COPY ["Basket.Core/Basket.Core.csproj", "Basket.Core/"]
+COPY ["Basket.Infrastructure/Basket.Infrastructure.csproj", "Basket.Infrastructure/"]
+RUN dotnet restore "./Basket.API/Basket.API.csproj"
 COPY . .
-
-# Ensure seed data directory exists
-RUN mkdir -p /app/Data/SeedData/
-
-# Copy seed data files
-COPY ["Catalog.Infrastructure/Data/SeedData/*.json", "/app/Data/SeedData/"]
-
-WORKDIR "/src/Catalog.API"
-RUN dotnet build "./Catalog.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/Basket.API"
+RUN dotnet build "./Basket.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Catalog.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./Basket.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-COPY --from=build /app/Data/SeedData /app/Data/SeedData
-ENTRYPOINT ["dotnet", "Catalog.API.dll"]
+ENTRYPOINT ["dotnet", "Basket.API.dll"]

@@ -1,4 +1,6 @@
 services:
+
+  # Catalog region
   catalogdb:
     image: mongo
     volumes:
@@ -10,5 +12,20 @@ services:
       context: ./Catalog
       dockerfile: ./Catalog.API/Dockerfile
 
+  # Basket region
+  basketdb:
+    image: redis:alpine
+
+  basket.api:
+    image: ${DOCKER_REGISTRY-}basketapi
+    build:
+      context: ./Basket
+      dockerfile: ./Basket.API/Dockerfile
+
+  #Portainer region
+  portainer:
+    image: portainer/portainer-ce
+
 volumes:
   mongo_data:
+  portainer_data:

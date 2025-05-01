@@ -1,9 +1,8 @@
-using Catalog.Application.Handlers;
 using System.Reflection;
-using Catalog.Core.Repositories;
-using Catalog.Infrastructure.Data;
-using Catalog.Infrastructure.Repositories;
 using Asp.Versioning;
+using Basket.Application.Handlers;
+using Basket.Core.Repositories;
+using Basket.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +19,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
-// Add API Versioning
+// Add API Versioning and API Explorer for Swagger
 builder.Services.AddApiVersioning(options =>
 {
     options.ReportApiVersions = true;
@@ -30,27 +29,32 @@ builder.Services.AddApiVersioning(options =>
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c=> c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Catalog.API", Version="v1"}));
+builder.Services.AddSwaggerGen(c => c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Basket.API", Version = "v1" }));
 
 //Register Mediatr
 var assemblies = new Assembly[]
 {
     Assembly.GetExecutingAssembly(),
-    typeof(GetAllBrandsHandler).Assembly
+    typeof(CreateShoppingCartCommandHandler).Assembly
 };
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(assemblies));
 
+// Redis
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetValue<string>("CacheSettings:ConnectionString");
+});
+
 //Register Application Services
-builder.Services.AddScoped<ICatalogContext, CatalogContext>();
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-builder.Services.AddScoped<IBrandRepository, ProductRepository>();
-builder.Services.AddScoped<ITypesRepository, ProductRepository>();
+builder.Services.AddScoped<IBasketRepository, BasketRepository>();
+
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
