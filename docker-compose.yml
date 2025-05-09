@@ -26,6 +26,22 @@ services:
   portainer:
     image: portainer/portainer-ce
 
+  # Discount region
+  discountdb:
+    image: postgres
+
+  discount.api:
+    image: ${DOCKER_REGISTRY-}discountapi
+    build: 
+      context: ./Discount
+      dockerfile: ./Discount.API/Dockerfile
+
+  # pgAdmin region
+  pgadmin:
+    image: dpage/pgadmin4
+
 volumes:
   mongo_data:
   portainer_data:
+  postgres_data:
+  pgadmin_data:
