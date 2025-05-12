@@ -12,13 +12,14 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Basket.API/Basket.API.csproj", "Basket.API/"]
-COPY ["Basket.Application/Basket.Application.csproj", "Basket.Application/"]
-COPY ["Basket.Core/Basket.Core.csproj", "Basket.Core/"]
-COPY ["Basket.Infrastructure/Basket.Infrastructure.csproj", "Basket.Infrastructure/"]
-RUN dotnet restore "./Basket.API/Basket.API.csproj"
+COPY ["Basket/Basket.API/Basket.API.csproj", "Basket/Basket.API/"]
+COPY ["Basket/Basket.Application/Basket.Application.csproj", "Basket/Basket.Application/"]
+COPY ["Basket/Basket.Core/Basket.Core.csproj", "Basket/Basket.Core/"]
+COPY ["Basket/Basket.Infrastructure/Basket.Infrastructure.csproj", "Basket/Basket.Infrastructure/"]
+COPY ["Discount/Discount.Application/Protos/", "Discount/Discount.Application/Protos/"]
+RUN dotnet restore "./Basket/Basket.API/Basket.API.csproj"
 COPY . .
-WORKDIR "/src/Basket.API"
+WORKDIR "/src/Basket/Basket.API"
 RUN dotnet build "./Basket.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage

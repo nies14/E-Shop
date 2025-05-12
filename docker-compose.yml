@@ -19,8 +19,8 @@ services:
   basket.api:
     image: ${DOCKER_REGISTRY-}basketapi
     build:
-      context: ./Basket
-      dockerfile: ./Basket.API/Dockerfile
+      context: .
+      dockerfile: ./Basket/Basket.API/Dockerfile
 
   #Portainer region
   portainer:
