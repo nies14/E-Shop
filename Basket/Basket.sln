@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35913.81 d17.13
+VisualStudioVersion = 17.13.35913.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Basket.API", "Basket.API\Basket.API.csproj", "{9F638CDC-E6D5-4664-83BD-5794FA1FEA10}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Basket.Application", "Basket.Application\Basket.Application.csproj", "{645B4B4A-6D94-4369-8178-1219B5C8517E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Basket.Infrastructure", "Basket.Infrastructure\Basket.Infrastructure.csproj", "{14502C74-2F70-4421-B624-205D0D803701}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eventbus.Messages", "Core\Eventbus.Messages\Eventbus.Messages.csproj", "{87EFE04C-916F-EB28-8B3C-62BC71CCE34D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{14502C74-2F70-4421-B624-205D0D803701}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14502C74-2F70-4421-B624-205D0D803701}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14502C74-2F70-4421-B624-205D0D803701}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87EFE04C-916F-EB28-8B3C-62BC71CCE34D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87EFE04C-916F-EB28-8B3C-62BC71CCE34D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87EFE04C-916F-EB28-8B3C-62BC71CCE34D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87EFE04C-916F-EB28-8B3C-62BC71CCE34D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

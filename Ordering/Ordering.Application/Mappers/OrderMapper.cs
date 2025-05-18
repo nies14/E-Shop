@@ -1,4 +1,5 @@
-﻿using Ordering.Application.Commands;
+﻿using Eventbus.Messages.Events;
+using Ordering.Application.Commands;
 using Ordering.Application.Responses;
 using Ordering.Core.Entities;
 
@@ -110,6 +111,29 @@ namespace Ordering.Application.Mappers
                     LastName = updateOrderCommand.LastName
                 };
 
+        }
+
+        public static BasketCheckoutEvent? ConvertToBasketCheckoutEvent(CheckoutOrderCommand checkoutOrderCommand)
+        {
+            return checkoutOrderCommand == null
+                ? null
+                : new BasketCheckoutEvent
+                {
+                    UserName = checkoutOrderCommand.UserName,
+                    AddressLine = checkoutOrderCommand.AddressLine,
+                    CardName = checkoutOrderCommand.CardName,
+                    CardNumber = checkoutOrderCommand.CardNumber,
+                    Country = checkoutOrderCommand.Country,
+                    Cvv = checkoutOrderCommand.Cvv,
+                    EmailAddress = checkoutOrderCommand.EmailAddress,
+                    Expiration = checkoutOrderCommand.Expiration,
+                    FirstName = checkoutOrderCommand.FirstName,
+                    LastName = checkoutOrderCommand.LastName,
+                    PaymentMethod = checkoutOrderCommand.PaymentMethod,
+                    State = checkoutOrderCommand.State,
+                    TotalPrice = checkoutOrderCommand.TotalPrice,
+                    ZipCode = checkoutOrderCommand.ZipCode
+                };
         }
     }
 }

@@ -1,0 +1,6 @@
+[submodule "Basket/Core"]
+	path = Basket/Core
+	url = https://github.com/nies14/E-Shop.Core.git
+[submodule "Ordering/Core"]
+	path = Ordering/Core
+	url = https://github.com/nies14/E-Shop.Core.git

@@ -3,6 +3,9 @@ using Asp.Versioning;
 using Basket.Application.Commands;
 using Basket.Application.Queries;
 using Basket.Application.Responses;
+using Basket.Core.Entities;
+using Eventbus.Messages.Events;
+using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,11 +16,13 @@ public class BasketController : ApiController
 {
     public readonly IMediator _mediator;
     private readonly ILogger<BasketController> _logger;
+    private readonly IPublishEndpoint _publishEndpoint;
 
-    public BasketController(IMediator mediator, ILogger<BasketController> logger)
+    public BasketController(IMediator mediator, ILogger<BasketController> logger, IPublishEndpoint publishEndpoint)
     {
         _mediator = mediator;
         _logger = logger;
+        _publishEndpoint = publishEndpoint;
     }
 
     [HttpGet]
@@ -46,4 +51,56 @@ public class BasketController : ApiController
         var cmd = new DeleteBasketByUserNameCommand(userName);
         return Ok(await _mediator.Send(cmd));
     }
+
+    [Route("[action]")]
+    [HttpPost]
+    [ProducesResponseType((int)HttpStatusCode.Accepted)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> Checkout([FromBody] BasketCheckout basketCheckout)
+    {
+        //Get the existing basket with username
+        var query = new GetBasketByUserNameQuery(basketCheckout.UserName);
+        var basket = await _mediator.Send(query);
+        if (basket == null)
+        {
+            return BadRequest();
+        }
+
+        var eventMsg = Convert(basketCheckout);
+        eventMsg.TotalPrice = basket.TotalPrice;
+        await _publishEndpoint.Publish(eventMsg);
+        _logger.LogInformation($"Basket Published for {basket.UserName}");
+        //remove the basket
+        var deleteCmd = new DeleteBasketByUserNameCommand(basketCheckout.UserName);
+        await _mediator.Send(deleteCmd);
+        return Accepted();
+    }
+
+    #region Helper Methods
+
+    private static BasketCheckoutEvent? Convert(BasketCheckout basketCheckout)
+    {
+        return basketCheckout == null
+            ? null
+            : new BasketCheckoutEvent
+            {
+                UserName = basketCheckout.UserName,
+                AddressLine = basketCheckout.AddressLine,
+                CardName = basketCheckout.CardName,
+                CardNumber = basketCheckout.CardNumber,
+                Country = basketCheckout.Country,
+                Cvv = basketCheckout.Cvv,
+                EmailAddress = basketCheckout.EmailAddress,
+                Expiration = basketCheckout.Expiration,
+                FirstName = basketCheckout.FirstName,
+                LastName = basketCheckout.LastName,
+                PaymentMethod = basketCheckout.PaymentMethod,
+                State = basketCheckout.State,
+                TotalPrice = basketCheckout.TotalPrice,
+                ZipCode = basketCheckout.ZipCode
+            };
+    }
+
+
+    #endregion
 }

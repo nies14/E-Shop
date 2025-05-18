@@ -26,6 +26,7 @@ public class OrderController : ApiController
         var orders = await _mediator.Send(query);
         return Ok(orders);
     }
+
     //Just for testing 
     [HttpPost(Name = "CheckoutOrder")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
@@ -34,6 +35,7 @@ public class OrderController : ApiController
         var result = await _mediator.Send(command);
         return Ok(result);
     }
+
     [HttpPut(Name = "UpdateOrder")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -42,6 +44,7 @@ public class OrderController : ApiController
         var result = await _mediator.Send(command);
         return NoContent();
     }
+
     [HttpDelete("{id}", Name = "DeleteOrder")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
