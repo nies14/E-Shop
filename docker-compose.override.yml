@@ -42,17 +42,6 @@ services:
     ports:
       - "8001:8080"
 
-  #region Portainer
-  portainer:
-    container_name: portainer
-    restart: always
-    ports:
-      - "8080:8000"
-      - "9090:9000"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
-
   #region Discount
   discountdb:
     container_name: discountdb
@@ -82,6 +71,37 @@ services:
          condition: service_healthy
     ports:
       - "8002:8080"
+
+  #region Ordering
+  orderdb:
+    container_name: orderdb
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=SqlServer2022!
+    restart: always
+    ports:
+      - "1433:1433"
+    volumes:
+      - orderdb-data:/var/opt/mssql
+      
+  ordering.api:
+    container_name: ordering.api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - "ConnectionStrings__OrderingConnectionString=Server=orderdb;Database=OrderDb;User Id=sa;Password=SqlServer2022!;TrustServerCertificate=True" 
+    ports:
+     - "8003:8080" 
+
+  #region Portainer
+  portainer:
+    container_name: portainer
+    restart: always
+    ports:
+      - "8080:8000"
+      - "9090:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
 
   #region pgAdmin
   pgadmin:

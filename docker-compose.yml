@@ -15,16 +15,11 @@ services:
   # Basket region
   basketdb:
     image: redis:alpine
-
   basket.api:
     image: ${DOCKER_REGISTRY-}basketapi
     build:
       context: .
       dockerfile: ./Basket/Basket.API/Dockerfile
-
-  #Portainer region
-  portainer:
-    image: portainer/portainer-ce
 
   # Discount region
   discountdb:
@@ -36,6 +31,22 @@ services:
       context: ./Discount
       dockerfile: ./Discount.API/Dockerfile
 
+  # Ordering region
+  orderdb:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+  
+  ordering.api:
+    image: ${DOCKER_REGISTRY-}orderingapi
+    build:
+      context: ./Ordering
+      dockerfile: ./Ordering.API/Dockerfile
+
+
+  #Portainer region
+  portainer:
+    image: portainer/portainer-ce
+
+
   # pgAdmin region
   pgadmin:
     image: dpage/pgadmin4
@@ -45,3 +56,4 @@ volumes:
   portainer_data:
   postgres_data:
   pgadmin_data:
+  orderdb-data:
