@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ordering.Infrastructure", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eventbus.Messages", "..\Basket\Core\Eventbus.Messages\Eventbus.Messages.csproj", "{13A7A625-6DD3-6F5F-3FB9-DC965DE3EC3A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EShop.Logging", "Core\EShop.Logging\EShop.Logging.csproj", "{FD17DB7E-8EA8-4086-9A52-7E629BE2E172}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{13A7A625-6DD3-6F5F-3FB9-DC965DE3EC3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13A7A625-6DD3-6F5F-3FB9-DC965DE3EC3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{13A7A625-6DD3-6F5F-3FB9-DC965DE3EC3A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD17DB7E-8EA8-4086-9A52-7E629BE2E172}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD17DB7E-8EA8-4086-9A52-7E629BE2E172}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD17DB7E-8EA8-4086-9A52-7E629BE2E172}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD17DB7E-8EA8-4086-9A52-7E629BE2E172}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

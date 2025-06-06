@@ -4,6 +4,8 @@ using Catalog.Core.Repositories;
 using Catalog.Infrastructure.Data;
 using Catalog.Infrastructure.Repositories;
 using Asp.Versioning;
+using Serilog;
+using EShop.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,9 @@ builder.Services.AddCors(options =>
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+//Serilog configuration
+builder.Host.UseSerilog(Logging.ConfigureLogger);
 
 // Add API Versioning
 builder.Services.AddApiVersioning(options =>

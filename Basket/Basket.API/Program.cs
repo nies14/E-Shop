@@ -5,7 +5,9 @@ using Basket.Application.Handlers;
 using Basket.Core.Repositories;
 using Basket.Infrastructure.Repositories;
 using Discount.Grpc.Protos;
+using EShop.Logging;
 using MassTransit;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +23,9 @@ builder.Services.AddCors(options =>
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+//Serilog configuration
+builder.Host.UseSerilog(Logging.ConfigureLogger);
 
 // Add API Versioning and API Explorer for Swagger
 builder.Services.AddApiVersioning(options =>

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35913.81 d17.13
+VisualStudioVersion = 17.13.35913.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discount.API", "Discount.API\Discount.API.csproj", "{9CB031ED-4F14-4417-B0A0-12D06246A402}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discount.Application", "Discount.Application\Discount.Application.csproj", "{BAF5F207-86D7-4DF1-A3CD-AC6872961476}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discount.Infrastructure", "Discount.Infrastructure\Discount.Infrastructure.csproj", "{854F607C-36A7-470E-B397-D74B76E54302}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EShop.Logging", "Core\EShop.Logging\EShop.Logging.csproj", "{31E48393-7611-31E4-D2FC-440B38376510}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{854F607C-36A7-470E-B397-D74B76E54302}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{854F607C-36A7-470E-B397-D74B76E54302}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{854F607C-36A7-470E-B397-D74B76E54302}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31E48393-7611-31E4-D2FC-440B38376510}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31E48393-7611-31E4-D2FC-440B38376510}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31E48393-7611-31E4-D2FC-440B38376510}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31E48393-7611-31E4-D2FC-440B38376510}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

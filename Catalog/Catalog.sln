@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35913.81 d17.13
+VisualStudioVersion = 17.13.35913.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Catalog.API", "Catalog.API\Catalog.API.csproj", "{B6E99B50-0C70-B7A5-F688-5A07EA01B092}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Catalog.Core", "Catalog.Core\Catalog.Core.csproj", "{FC58EA57-6830-630D-DE5A-DBD8A3D7560E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Catalog.Infrastructure", "Catalog.Infrastructure\Catalog.Infrastructure.csproj", "{729F9899-D445-101B-3935-4218FF5218A6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EShop.Logging", "Core\EShop.Logging\EShop.Logging.csproj", "{31E48393-7611-31E4-D2FC-440B38376510}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{729F9899-D445-101B-3935-4218FF5218A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{729F9899-D445-101B-3935-4218FF5218A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{729F9899-D445-101B-3935-4218FF5218A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31E48393-7611-31E4-D2FC-440B38376510}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31E48393-7611-31E4-D2FC-440B38376510}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31E48393-7611-31E4-D2FC-440B38376510}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31E48393-7611-31E4-D2FC-440B38376510}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

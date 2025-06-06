@@ -14,6 +14,7 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Ordering.API/Ordering.API.csproj", "Ordering.API/"]
 COPY ["Core/Eventbus.Messages/Eventbus.Messages.csproj", "Core/Eventbus.Messages/"]
+COPY ["Core/EShop.Logging/EShop.Logging.csproj", "Core/EShop.Logging/"]
 COPY ["Ordering.Application/Ordering.Application.csproj", "Ordering.Application/"]
 COPY ["Ordering.Core/Ordering.Core.csproj", "Ordering.Core/"]
 COPY ["Ordering.Infrastructure/Ordering.Infrastructure.csproj", "Ordering.Infrastructure/"]

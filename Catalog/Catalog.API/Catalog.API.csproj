@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Catalog.Application\Catalog.Application.csproj" />
     <ProjectReference Include="..\Catalog.Infrastructure\Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="..\Core\EShop.Logging\EShop.Logging.csproj" />
   </ItemGroup>
 
 </Project>

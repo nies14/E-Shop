@@ -23,6 +23,7 @@
 
   <ItemGroup>
 	<PackageReference Include="Asp.Versioning.Mvc" Version="8.0.0" />
+	<ProjectReference Include="..\Core\EShop.Logging\EShop.Logging.csproj" />
 	<ProjectReference Include="..\Core\Eventbus.Messages\Eventbus.Messages.csproj" />
     <ProjectReference Include="..\Ordering.Application\Ordering.Application.csproj" />
     <ProjectReference Include="..\Ordering.Infrastructure\Ordering.Infrastructure.csproj" />

@@ -9,7 +9,6 @@ services:
     volumes:
       - mongo_data:/data/db
 
-
   catalog.api:
     container_name: catalog.api
     environment:
@@ -18,7 +17,8 @@ services:
       - "DatabaseSettings__DatabaseName=CatalogDb"
       - "DatabaseSettings__CollectionName=Products"
       - "DatabaseSettings__BrandsCollection=Brands"
-      - "DatabaseSettings__TypesCollection=Types" 
+      - "DatabaseSettings__TypesCollection=Types"
+      - "ElasticConfiguration__Uri=http://elasticsearch:9200"
     depends_on:
       - catalogdb
     ports:
@@ -30,7 +30,6 @@ services:
     restart: always
     ports:
       - "6379:6379" 
-
   basket.api:
     container_name: basket.api
     environment:
@@ -38,6 +37,7 @@ services:
       - "CacheSettings__ConnectionString=basketdb:6379"
       - "GrpcSettings__DiscountUrl=http://discount.api:8080"
       - "EventBusSettings__HostAddress=amqp://guest:guest@rabbitmq:5672"
+      - "ElasticConfiguration__Uri=http://elasticsearch:9200"
     depends_on:
       - basketdb
       - rabbitmq
@@ -62,12 +62,12 @@ services:
       timeout: 5s
       retries: 5
 
-
   discount.api:
     container_name: discount.api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - "DatabaseSettings__ConnectionString=Server=discountdb;Port=5432;Database=DiscountDb;User Id=admin;Password=Password@1;"
+      - "ElasticConfiguration__Uri=http://elasticsearch:9200"
     depends_on:
        discountdb:
          condition: service_healthy
@@ -85,13 +85,14 @@ services:
       - "1433:1433"
     volumes:
       - orderdb-data:/var/opt/mssql
-      
+
   ordering.api:
     container_name: ordering.api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - "ConnectionStrings__OrderingConnectionString=Server=orderdb;Database=OrderDb;User Id=sa;Password=SqlServer2022!;TrustServerCertificate=True" 
       - "EventBusSettings__HostAddress=amqp://guest:guest@rabbitmq:5672"
+      - "ElasticConfiguration__Uri=http://elasticsearch:9200"
     depends_on:
       - rabbitmq
     ports:
@@ -105,6 +106,34 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  # region Elasticsearch & Kibana  
+  elasticsearch:
+    container_name: elasticsearch
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health?pretty | grep status | grep -E '(green|yellow)'"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      
+  kibana:
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    ports:
+      - "5601:5601" 
+
 
   #region Portainer
   portainer:

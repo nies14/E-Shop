@@ -4,10 +4,15 @@ using Discount.Application.Handlers;
 using Discount.Core.Repositories;
 using Discount.Infrastructure.Extensions;
 using Discount.Infrastructure.Repositories;
+using EShop.Logging;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+//Serilog configuration
+builder.Host.UseSerilog(Logging.ConfigureLogger);
 
 //Register Mediatr
 var assemblies = new Assembly[]
