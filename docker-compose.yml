@@ -46,6 +46,13 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
 
+  #region Ocelot API Gateway
+  ocelotapigw:
+    image: ${DOCKER_REGISTRY-}ocelotapigw
+    build:
+      context: ./Basket
+      dockerfile: ./Core/ApiGateways/Ocelot.ApiGateway/Dockerfile
+
   # Elasticsearch & Kibana region
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3

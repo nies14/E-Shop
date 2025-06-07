@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eventbus.Messages", "Core\E
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EShop.Logging", "Core\EShop.Logging\EShop.Logging.csproj", "{31E48393-7611-31E4-D2FC-440B38376510}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ocelot.ApiGateway", "Core\ApiGateways\Ocelot.ApiGateway\Ocelot.ApiGateway.csproj", "{78CE5085-8F50-4E49-9221-703B1DD96613}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{31E48393-7611-31E4-D2FC-440B38376510}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{31E48393-7611-31E4-D2FC-440B38376510}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{31E48393-7611-31E4-D2FC-440B38376510}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78CE5085-8F50-4E49-9221-703B1DD96613}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78CE5085-8F50-4E49-9221-703B1DD96613}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78CE5085-8F50-4E49-9221-703B1DD96613}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78CE5085-8F50-4E49-9221-703B1DD96613}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -157,3 +157,17 @@ services:
       - "5050:80"
     volumes:
       - pgadmin_data:/root/.pgadmin
+
+ #region Ocelot API Gateway
+  ocelotapigw:
+    container_name: ocelotapigw
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development      
+    depends_on:
+#      - identityserver
+      - catalog.api
+      - basket.api
+      - discount.api
+      - ordering.api
+    ports:
+      - "9010:8080" 
