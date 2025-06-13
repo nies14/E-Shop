@@ -6,6 +6,7 @@ using Basket.Core.Repositories;
 using Basket.Infrastructure.Repositories;
 using Discount.Grpc.Protos;
 using EShop.Logging;
+using EShop.Logging.Correlation;
 using MassTransit;
 using Serilog;
 
@@ -55,6 +56,7 @@ builder.Services.AddStackExchangeRedisCache(options =>
 
 //Register Application Services
 builder.Services.AddScoped<IBasketRepository, BasketRepository>();
+builder.Services.AddScoped<ICorrelationIdGenerator, CorrelationIdGenerator>();
 builder.Services.AddScoped<DiscountGrpcService>();
 builder.Services.AddGrpcClient<DiscountProtoService.DiscountProtoServiceClient>
     (cfg => cfg.Address = new Uri(builder.Configuration["GrpcSettings:DiscountUrl"]));
