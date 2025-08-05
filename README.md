@@ -1,14 +1,50 @@
 # E-Shop Microservices
 
-This project is a microservices-based e-commerce application built with .NET 8.0. The current implementation includes a Catalog microservice that manages products, brands, and product types.
+This project is a microservices-based e-commerce application built with .NET 8.0. The implementation includes multiple microservices: Catalog, Basket, Ordering, and Discount services.
 
 ## Technologies Used
 
-- .NET 8.0
-- MongoDB
-- Docker
-- MediatR (CQRS pattern)
-- Swagger/OpenAPI
+### Backend Technologies
+- **.NET 8.0** - Core framework for all microservices
+- **ASP.NET Core Web API** - REST API endpoints
+- **gRPC** - Inter-service communication (Discount service)
+- **MediatR** - CQRS pattern implementation
+- **Entity Framework Core** - ORM for SQL Server (Ordering service)
+- **Dapper** - Micro-ORM for PostgreSQL (Discount service)
+
+### Databases
+- **MongoDB** - Document database for Catalog service
+- **Redis** - In-memory cache for Basket service
+- **SQL Server** - Relational database for Ordering service
+- **PostgreSQL** - Relational database for Discount service
+
+### Message Broker & Events
+- **RabbitMQ** - Message bus for event-driven communication
+- **MassTransit** - Distributed application framework for message-based systems
+
+### API Documentation & Versioning
+- **Swagger/OpenAPI** - API documentation and testing interface
+- **API Versioning** - Version management for REST APIs
+
+### Logging & Monitoring
+- **Serilog** - Structured logging across all services
+
+### Containerization & Orchestration
+- **Docker** - Containerization platform
+- **Docker Compose** - Multi-container application orchestration
+
+### Development Tools
+- **Visual Studio 2022** / **VS Code** - IDE support
+- **Git** - Version control
+- **Postman** - API testing (optional)
+
+### Architecture Patterns
+- **Microservices Architecture** - Service decomposition
+- **CQRS (Command Query Responsibility Segregation)** - Data access pattern
+- **Domain-Driven Design (DDD)** - Domain modeling approach
+- **Event-Driven Architecture** - Asynchronous communication
+- **Repository Pattern** - Data access abstraction
+- **Clean Architecture** - Layered application structure
 
 ## Project Structure
 
