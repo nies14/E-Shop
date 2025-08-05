@@ -19,6 +19,11 @@ services:
       - "DatabaseSettings__BrandsCollection=Brands"
       - "DatabaseSettings__TypesCollection=Types"
       - "ElasticConfiguration__Uri=http://elasticsearch:9200"
+      - OTEL_SERVICE_NAME=catalog-api
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=catalog-api,service.version=1.0.0
+      - OTEL_EXPORTER_OTLP_ENDPOINT="https://otlp-gateway-prod-ca-east-0.grafana.net/otlp"
+      - OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
+      - OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic MTMxODkyMTpnbGNfZXlKdklqb2lNVFE0TkRRMk1TSXNJbTRpT2lKemRHRmpheTB4TXpFNE9USXhMVzkwYkhBdGQzSnBkR1V0WlhOb2IzQWlMQ0pySWpvaVNXbElUSEJuY1RKd01XVk1aalkyVHpJME9UQTJWakI1SWl3aWJTSTZleUp5SWpvaWNISnZaQzFqWVMxbFlYTjBMVEFpZlgwPQ==
     depends_on:
       - catalogdb
     ports:
@@ -38,6 +43,11 @@ services:
       - "GrpcSettings__DiscountUrl=http://discount.api:8080"
       - "EventBusSettings__HostAddress=amqp://guest:guest@rabbitmq:5672"
       - "ElasticConfiguration__Uri=http://elasticsearch:9200"
+      - OTEL_SERVICE_NAME=basket-api
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=basket-api,service.version=1.0.0
+      - OTEL_EXPORTER_OTLP_ENDPOINT="https://otlp-gateway-prod-ca-east-0.grafana.net/otlp"
+      - OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
+      - OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic MTMxODkyMTpnbGNfZXlKdklqb2lNVFE0TkRRMk1TSXNJbTRpT2lKemRHRmpheTB4TXpFNE9USXhMVzkwYkhBdGQzSnBkR1V0WlhOb2IzQWlMQ0pySWpvaVNXbElUSEJuY1RKd01XVk1aalkyVHpJME9UQTJWakI1SWl3aWJTSTZleUp5SWpvaWNISnZaQzFqWVMxbFlYTjBMVEFpZlgwPQ==
     depends_on:
       - basketdb
       - rabbitmq
@@ -93,6 +103,11 @@ services:
       - "ConnectionStrings__OrderingConnectionString=Server=orderdb;Database=OrderDb;User Id=sa;Password=SqlServer2022!;TrustServerCertificate=True" 
       - "EventBusSettings__HostAddress=amqp://guest:guest@rabbitmq:5672"
       - "ElasticConfiguration__Uri=http://elasticsearch:9200"
+      - OTEL_SERVICE_NAME=ordering-api
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=ordering-api,service.version=1.0.0
+      - OTEL_EXPORTER_OTLP_ENDPOINT="https://otlp-gateway-prod-ca-east-0.grafana.net/otlp"
+      - OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
+      - OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic MTMxODkyMTpnbGNfZXlKdklqb2lNVFE0TkRRMk1TSXNJbTRpT2lKemRHRmpheTB4TXpFNE9USXhMVzkwYkhBdGQzSnBkR1V0WlhOb2IzQWlMQ0pySWpvaVNXbElUSEJuY1RKd01XVk1aalkyVHpJME9UQTJWakI1SWl3aWJTSTZleUp5SWpvaWNISnZaQzFqWVMxbFlYTjBMVEFpZlgwPQ==
     depends_on:
       - rabbitmq
     ports:

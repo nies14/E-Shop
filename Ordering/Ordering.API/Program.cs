@@ -8,6 +8,10 @@ using Ordering.Application.Extensions;
 using Ordering.Infrastructure.Data;
 using Ordering.Infrastructure.Extensions;
 using Serilog;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Npgsql;
+using OpenTelemetry.Logs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 //Serilog configuration
-builder.Host.UseSerilog(Logging.ConfigureLogger);
+//builder.Host.UseSerilog(Logging.ConfigureLogger);
 
 // Add API Versioning
 builder.Services.AddApiVersioning(options =>
@@ -55,6 +59,31 @@ builder.Services.AddMassTransit(config =>
     });
 });
 builder.Services.AddMassTransitHostedService();
+
+
+// Configure OpenTelemetry
+builder.Services
+    .AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? "Ordering.API"))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddRedisInstrumentation()
+            .AddNpgsql();
+
+        tracing.AddOtlpExporter();
+    });
+
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.IncludeScopes = true;
+    logging.IncludeFormattedMessage = true;
+
+    logging.AddOtlpExporter();
+});
 
 
 var app = builder.Build();

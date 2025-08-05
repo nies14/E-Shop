@@ -1,5 +1,6 @@
 docker run --name mongodb -d -p 27017:27017 mongo:latest (when running from visual studio and only docker image not compose)
 
+docker compose -f .\docker-compose.yml -f .\docker-compose.override.yml build 
 
 docker compose -f .\docker-compose.yml -f .\docker-compose.override.yml up -d
 

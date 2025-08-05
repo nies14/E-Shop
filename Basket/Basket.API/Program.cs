@@ -8,6 +8,10 @@ using Discount.Grpc.Protos;
 using EShop.Logging;
 using EShop.Logging.Correlation;
 using MassTransit;
+using Npgsql;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,7 +30,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 
 //Serilog configuration
-builder.Host.UseSerilog(Logging.ConfigureLogger);
+//builder.Host.UseSerilog(Logging.ConfigureLogger);
 
 // Add API Versioning and API Explorer for Swagger
 builder.Services.AddApiVersioning(options =>
@@ -69,6 +73,30 @@ builder.Services.AddMassTransit(config =>
     });
 });
 builder.Services.AddMassTransitHostedService();
+
+// Configure OpenTelemetry
+builder.Services
+    .AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? "Basket.API"))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddRedisInstrumentation()
+            .AddNpgsql();
+
+        tracing.AddOtlpExporter();
+    });
+
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.IncludeScopes = true;
+    logging.IncludeFormattedMessage = true;
+
+    logging.AddOtlpExporter();
+});
 
 
 var app = builder.Build();

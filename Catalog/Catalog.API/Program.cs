@@ -6,6 +6,10 @@ using Catalog.Infrastructure.Repositories;
 using Asp.Versioning;
 using Serilog;
 using EShop.Logging;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Npgsql;
+using OpenTelemetry.Logs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +27,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 
 //Serilog configuration
-builder.Host.UseSerilog(Logging.ConfigureLogger);
+//builder.Host.UseSerilog(Logging.ConfigureLogger);
 
 // Add API Versioning
 builder.Services.AddApiVersioning(options =>
@@ -50,6 +54,34 @@ builder.Services.AddScoped<ICatalogContext, CatalogContext>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IBrandRepository, ProductRepository>();
 builder.Services.AddScoped<ITypesRepository, ProductRepository>();
+
+
+// Configure OpenTelemetry
+builder.Services
+    .AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? "Catalog.API"))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation(options =>
+            {
+                options.RecordException = true;
+            })
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddRedisInstrumentation()
+            .AddNpgsql();
+
+        tracing.AddOtlpExporter();
+    });
+
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.IncludeScopes = true;
+    logging.IncludeFormattedMessage = true;
+
+    logging.AddOtlpExporter();
+});
 
 var app = builder.Build();
 
