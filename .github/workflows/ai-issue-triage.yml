@@ -1,0 +1,160 @@
+name: AI Issue Triage & Labeling
+
+on:
+  issues:
+    types: [opened, edited]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to triage'
+        required: true
+        type: string
+
+env:
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  triage-issue:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.GEMINI_API_KEY != '' }}
+    
+    steps:
+    - name: 🛎️ Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 📦 Install Dependencies
+      run: |
+        npm install
+        if [ -d "tools/gemini-cli" ] && [ -f "tools/gemini-cli/package.json" ]; then
+          cd tools/gemini-cli && npm install
+        fi
+        
+    - name: 🔧 Setup Environment
+      run: |
+        echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > tools/gemini-cli/.env
+        echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> tools/gemini-cli/.env
+        echo "ISSUE_NUMBER=${{ github.event.issue.number || inputs.issue_number }}" >> tools/gemini-cli/.env
+        
+    - name: 📝 Get Issue Content
+      id: issue-content
+      uses: actions/github-script@v7
+      with:
+        result-encoding: string
+        script: |
+          const issueNumber = ${{ github.event.issue.number || inputs.issue_number }};
+          const { data: issue } = await github.rest.issues.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: issueNumber
+          });
+          
+          // Get comments if any
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: issueNumber
+          });
+          
+          const commentText = comments.map(c => `Comment by ${c.user.login}: ${c.body}`).join('\n\n');
+          
+          return JSON.stringify({
+            title: issue.title,
+            body: issue.body || '',
+            author: issue.user.login,
+            labels: issue.labels.map(l => l.name),
+            comments: commentText,
+            url: issue.html_url
+          });
+          
+    - name: 🤖 AI Issue Analysis
+      run: |
+        echo '${{ steps.issue-content.outputs.result }}' > issue-data.json
+        npm run cli:triage-issue ${{ github.event.issue.number || inputs.issue_number }}
+      continue-on-error: true
+      
+    - name: 🏷️ Apply AI-Suggested Labels
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          if (fs.existsSync('issue-triage-result.json')) {
+            const triageResult = JSON.parse(fs.readFileSync('issue-triage-result.json', 'utf8'));
+            
+            const issueNumber = ${{ github.event.issue.number || inputs.issue_number }};
+            
+            // Apply suggested labels
+            if (triageResult.suggestedLabels && triageResult.suggestedLabels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: triageResult.suggestedLabels
+              });
+            }
+            
+            // Set priority label
+            if (triageResult.priority) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: [`priority-${triageResult.priority}`]
+              });
+            }
+            
+            // Assign to team/person if suggested
+            if (triageResult.assignee) {
+              try {
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  assignees: [triageResult.assignee]
+                });
+              } catch (error) {
+                console.log('Could not assign:', error.message);
+              }
+            }
+            
+            // Add AI analysis comment
+            if (triageResult.analysis) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `## 🤖 AI Issue Analysis
+                
+${triageResult.analysis}
+
+**Suggested Labels:** ${triageResult.suggestedLabels?.join(', ') || 'None'}
+**Priority:** ${triageResult.priority || 'Not determined'}
+**Category:** ${triageResult.category || 'General'}
+
+---
+*This analysis was generated automatically by AI. Please review and adjust as needed.*`
+              });
+            }
+          }
+          
+    - name: 📤 Upload Triage Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: issue-triage-${{ github.event.issue.number || inputs.issue_number }}
+        path: |
+          issue-triage-result.json
+          issue-data.json
+        retention-days: 30

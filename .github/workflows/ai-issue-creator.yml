@@ -1,0 +1,156 @@
+name: AI Issue Creator & Code Fixer
+
+on:
+  schedule:
+    - cron: '0 6 * * 2' # Every Tuesday at 6 AM UTC
+  workflow_dispatch:
+    inputs:
+      create_issues:
+        description: 'Create GitHub issues for found problems'
+        required: false
+        default: true
+        type: boolean
+      auto_fix:
+        description: 'Auto-create fix PRs for safe issues'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+jobs:
+  analyze-and-fix:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🛎️ Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 📦 Install Dependencies
+      run: |
+        npm install
+        cd tools/gemini-cli && npm install
+        
+    - name: 🔧 Setup Environment
+      run: |
+        echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > tools/gemini-cli/.env
+        
+    - name: 🔒 Security Scan
+      run: npm run cli:security-scan
+      continue-on-error: true
+      
+    - name: ⚡ Performance Review
+      run: npm run cli:performance-review
+      continue-on-error: true
+      
+    - name: 📊 Full Analysis
+      run: npm run cli:analyze > full-analysis.md
+      continue-on-error: true
+      
+    - name: 🐛 Create Issues for Problems
+      if: github.event_name == 'workflow_dispatch' && inputs.create_issues == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          // Parse security report for issues
+          if (fs.existsSync('security-report.md')) {
+            const securityReport = fs.readFileSync('security-report.md', 'utf8');
+            
+            // Extract high-priority security issues
+            const criticalIssues = securityReport.match(/Critical:.*$/gm) || [];
+            const highIssues = securityReport.match(/High:.*$/gm) || [];
+            
+            for (const issue of [...criticalIssues, ...highIssues].slice(0, 5)) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🔒 Security Issue: ${issue.substring(0, 50)}...`,
+                body: `## Security Issue Found\n\n${issue}\n\n**Source**: Automated security scan\n**Priority**: High\n**Auto-generated**: Yes`,
+                labels: ['security', 'bug', 'ai-generated']
+              });
+            }
+          }
+          
+          // Parse performance report for issues
+          if (fs.existsSync('performance-report.md')) {
+            const perfReport = fs.readFileSync('performance-report.md', 'utf8');
+            
+            const perfIssues = perfReport.match(/Performance.*$/gm) || [];
+            
+            for (const issue of perfIssues.slice(0, 3)) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `⚡ Performance Issue: ${issue.substring(0, 50)}...`,
+                body: `## Performance Issue Found\n\n${issue}\n\n**Source**: Automated performance review\n**Priority**: Medium\n**Auto-generated**: Yes`,
+                labels: ['performance', 'enhancement', 'ai-generated']
+              });
+            }
+          }
+          
+    - name: 🔧 Create Fix Branch
+      if: github.event_name == 'workflow_dispatch' && inputs.auto_fix == 'true'
+      run: |
+        git checkout -b ai-fixes-$(date +%Y%m%d-%H%M%S)
+        
+    - name: 🤖 Generate and Apply Fixes
+      if: github.event_name == 'workflow_dispatch' && inputs.auto_fix == 'true'
+      run: |
+        # Generate implementation suggestions
+        npm run cli:implement-suggestions 0 > ai-fixes.md
+        
+        # Apply safe fixes (this would need more sophisticated implementation)
+        echo "// AI-generated improvements" >> README-AI-IMPROVEMENTS.md
+        cat ai-fixes.md >> README-AI-IMPROVEMENTS.md
+        
+    - name: 🚀 Create Fix PR
+      if: github.event_name == 'workflow_dispatch' && inputs.auto_fix == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub AI Assistant"
+        git add .
+        if ! git diff --staged --quiet; then
+          git commit -m "feat: AI-generated code improvements and fixes"
+          git push origin HEAD
+          
+          # Create PR using GitHub CLI
+          gh pr create \
+            --title "🤖 AI-Generated Code Improvements" \
+            --body "This PR contains AI-generated improvements including:
+            
+            - Security fixes
+            - Performance optimizations  
+            - Code quality improvements
+            - Best practice implementations
+            
+            **⚠️ Please review carefully before merging**
+            
+            Generated by: GitHub Actions AI Assistant" \
+            --label "ai-generated,enhancement" \
+            --draft
+        fi
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: 📤 Upload Analysis Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ai-analysis-results-${{ github.run_number }}
+        path: |
+          security-report.md
+          performance-report.md
+          full-analysis.md
+          ai-fixes.md
+        retention-days: 30

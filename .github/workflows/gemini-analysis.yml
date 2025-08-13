@@ -1,0 +1,155 @@
+name: E-Shop AI Analysis & Documentation
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main ]
+    # Only run for PRs from the same repository (not forks)
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: # Manual trigger
+
+env:
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  gemini-analysis:
+    runs-on: ubuntu-latest
+    # Only run if we have the API key (skip for external forks)
+    if: ${{ secrets.GEMINI_API_KEY != '' }}
+    
+    steps:
+    - name: 🛎️ Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 📦 Install Dependencies
+      run: |
+        # Install main project dependencies
+        npm install
+        
+        # Check if gemini-cli directory exists and has package.json
+        if [ -d "tools/gemini-cli" ] && [ -f "tools/gemini-cli/package.json" ]; then
+          cd tools/gemini-cli
+          npm install
+        else
+          echo "⚠️ Gemini CLI package.json not found, skipping CLI dependencies"
+        fi
+        
+    - name: 🔧 Setup Environment
+      run: |
+        # Create .env file with conditional API key
+        if [ -n "${{ secrets.GEMINI_API_KEY }}" ]; then
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > tools/gemini-cli/.env
+          echo "CATALOG_API_URL=http://localhost:8000" >> tools/gemini-cli/.env
+          echo "BASKET_API_URL=http://localhost:8001" >> tools/gemini-cli/.env
+          echo "ORDERING_API_URL=http://localhost:8002" >> tools/gemini-cli/.env
+          echo "DISCOUNT_API_URL=http://localhost:8003" >> tools/gemini-cli/.env
+          echo "✅ Environment configured with API key"
+        else
+          echo "⚠️ GEMINI_API_KEY secret not found. Running in demo mode."
+          echo "📝 Creating demo .env file"
+          echo "GEMINI_API_KEY=demo_key_replace_with_real_key" > tools/gemini-cli/.env
+          echo "CATALOG_API_URL=http://localhost:8000" >> tools/gemini-cli/.env
+          echo "BASKET_API_URL=http://localhost:8001" >> tools/gemini-cli/.env
+          echo "ORDERING_API_URL=http://localhost:8002" >> tools/gemini-cli/.env
+          echo "DISCOUNT_API_URL=http://localhost:8003" >> tools/gemini-cli/.env
+          echo "🔑 For maintainers: Add GEMINI_API_KEY to repository secrets"
+        fi
+        
+    - name: 🔍 Validate Setup
+      run: |
+        echo "🔍 Validating GitHub Actions setup..."
+        
+        # Check if validation script exists
+        if [ -f "tools/validate-setup.js" ]; then
+          npm run validate-setup || echo "⚠️ Setup validation failed"
+        else
+          echo "⚠️ Validation script not found"
+        fi
+        
+        # Check if CLI commands exist
+        if [ -f "tools/gemini-cli/gemini-cli.js" ]; then
+          echo "✅ Gemini CLI found"
+          npm run cli:help || echo "⚠️ CLI help command failed"
+        else
+          echo "❌ Gemini CLI not found"
+        fi
+        
+    - name: 🔍 Run Project Analysis
+      run: npm run cli:analyze
+      continue-on-error: true
+      
+    - name: 📝 Generate Service Documentation
+      run: |
+        npm run cli:docs Catalog || echo "Catalog docs generation failed"
+        npm run cli:docs Basket || echo "Basket docs generation failed"
+        npm run cli:docs Ordering || echo "Ordering docs generation failed"
+        npm run cli:docs Discount || echo "Discount docs generation failed"
+      continue-on-error: true
+        
+    - name: 🧪 Generate Test Suggestions
+      run: |
+        npm run cli:tests Catalog > test-suggestions-catalog.md || echo "Catalog test suggestions failed"
+        npm run cli:tests Basket > test-suggestions-basket.md || echo "Basket test suggestions failed"
+        npm run cli:tests Ordering > test-suggestions-ordering.md || echo "Ordering test suggestions failed"
+        npm run cli:tests Discount > test-suggestions-discount.md || echo "Discount test suggestions failed"
+      continue-on-error: true
+        
+    - name: 🐳 Docker Optimization
+      run: npm run cli:docker > docker-optimization.md || echo "Docker optimization failed"
+      continue-on-error: true
+      
+    - name: 📤 Upload Generated Documentation
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: gemini-generated-docs-${{ github.run_number }}
+        path: |
+          **/API-Documentation.md
+          test-suggestions-*.md
+          docker-optimization.md
+        retention-days: 30
+        
+    - name: 💬 Comment on PR (if PR)
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          let comment = '## 🤖 AI Analysis Results\n\n';
+          
+          // Check if documentation was generated
+          const services = ['Catalog', 'Basket', 'Ordering', 'Discount'];
+          for (const service of services) {
+            const docPath = `${service}/API-Documentation.md`;
+            if (fs.existsSync(docPath)) {
+              comment += `✅ Documentation generated for ${service} service\n`;
+            } else {
+              comment += `❌ Documentation generation failed for ${service} service\n`;
+            }
+          }
+          
+          comment += '\n📁 **Generated Files:**\n';
+          comment += '- API Documentation for each service\n';
+          comment += '- Test suggestions\n';
+          comment += '- Docker optimization recommendations\n\n';
+          comment += '📎 Check the **Artifacts** section to download generated documentation.';
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });

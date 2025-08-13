@@ -1,0 +1,77 @@
+name: E-Shop AI Analysis (Safe Mode)
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  setup-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🛎️ Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: 📋 Check Project Structure
+      run: |
+        echo "🔍 Checking project structure..."
+        echo "📁 Root directory contents:"
+        ls -la
+        
+        echo "🔧 Checking for tools directory:"
+        if [ -d "tools" ]; then
+          echo "✅ tools/ directory exists"
+          ls -la tools/
+        else
+          echo "❌ tools/ directory not found"
+        fi
+        
+        echo "🤖 Checking for Gemini CLI:"
+        if [ -d "tools/gemini-cli" ]; then
+          echo "✅ tools/gemini-cli/ directory exists"
+          ls -la tools/gemini-cli/
+        else
+          echo "❌ tools/gemini-cli/ directory not found"
+        fi
+        
+        echo "📦 Checking package.json:"
+        if [ -f "package.json" ]; then
+          echo "✅ package.json exists"
+          echo "🔍 Checking npm scripts:"
+          npm run --silent | grep "cli:" || echo "⚠️ No CLI scripts found"
+        else
+          echo "❌ package.json not found"
+        fi
+        
+    - name: 🔧 Setup Check
+      run: |
+        echo "🔐 Checking secrets setup:"
+        if [ -n "${{ secrets.GEMINI_API_KEY }}" ]; then
+          echo "✅ GEMINI_API_KEY secret is configured"
+        else
+          echo "⚠️ GEMINI_API_KEY secret not found"
+          echo "📝 To add it:"
+          echo "   1. Go to Settings → Secrets and variables → Actions"
+          echo "   2. Click 'New repository secret'"
+          echo "   3. Name: GEMINI_API_KEY"
+          echo "   4. Value: Your actual Gemini API key"
+        fi
+        
+        echo "🎯 Next steps:"
+        echo "1. Add GEMINI_API_KEY secret if missing"
+        echo "2. Ensure all files are committed and pushed"
+        echo "3. Re-run the workflows"
+        
+    - name: 📤 Setup Report
+      run: |
+        echo "📊 Setup Validation Complete"
+        echo "✅ This workflow validates the basic setup"
+        echo "🔄 Once setup is complete, the main AI workflows will work"

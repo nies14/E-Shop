@@ -1,0 +1,82 @@
+name: Custom AI Analysis
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to analyze'
+        required: true
+        default: 'Catalog'
+        type: choice
+        options:
+        - Catalog
+        - Basket
+        - Ordering
+        - Discount
+        - All
+      analysis_type:
+        description: 'Type of analysis'
+        required: true
+        default: 'docs'
+        type: choice
+        options:
+        - docs
+        - tests
+        - docker
+        - analyze
+
+env:
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+jobs:
+  custom-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🛎️ Checkout
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 📦 Install Dependencies
+      run: |
+        npm install
+        cd tools/gemini-cli && npm install
+        
+    - name: 🔧 Setup Environment
+      run: |
+        echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > tools/gemini-cli/.env
+        
+    - name: 🎯 Run Custom Analysis
+      run: |
+        if [ "${{ inputs.service }}" = "All" ]; then
+          if [ "${{ inputs.analysis_type }}" = "analyze" ]; then
+            npm run cli:analyze
+          elif [ "${{ inputs.analysis_type }}" = "docker" ]; then
+            npm run cli:docker
+          else
+            npm run cli:${{ inputs.analysis_type }} Catalog || echo "Catalog failed"
+            npm run cli:${{ inputs.analysis_type }} Basket || echo "Basket failed"
+            npm run cli:${{ inputs.analysis_type }} Ordering || echo "Ordering failed"
+            npm run cli:${{ inputs.analysis_type }} Discount || echo "Discount failed"
+          fi
+        else
+          npm run cli:${{ inputs.analysis_type }} ${{ inputs.service }}
+        fi
+      continue-on-error: true
+        
+    - name: 📤 Upload Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: custom-analysis-${{ inputs.service }}-${{ inputs.analysis_type }}-${{ github.run_number }}
+        path: |
+          **/API-Documentation.md
+          test-suggestions-*.md
+          docker-optimization.md
+          PROJECT-ANALYSIS.md
+        retention-days: 7
