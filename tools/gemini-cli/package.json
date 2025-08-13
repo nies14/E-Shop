@@ -1,0 +1,27 @@
+{
+  "name": "eshop-gemini-cli",
+  "version": "1.0.0",
+  "description": "Gemini CLI tools for E-Shop microservices project",
+  "main": "gemini-cli.js",
+  "scripts": {
+    "start": "node gemini-cli.js",
+    "help": "node gemini-cli.js help",
+    "analyze": "node gemini-cli.js analyze",
+    "docs": "node gemini-cli.js docs",
+    "tests": "node gemini-cli.js tests",
+    "optimize-docker": "node gemini-cli.js optimize-docker"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "dotenv": "^16.4.7"
+  },
+  "keywords": [
+    "gemini",
+    "ai",
+    "documentation",
+    "microservices",
+    "eshop"
+  ],
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,35 @@
+{
+  "name": "e-shop",
+  "version": "1.0.0",
+  "description": "This project is a microservices-based e-commerce application built with .NET 8.0. The implementation includes multiple microservices: Catalog, Basket, Ordering, and Discount services.",
+  "main": "index.js",
+  "scripts": {
+    "gemini": "node tools/gemini-cli/gemini-cli.js",
+    "cli:help": "node tools/gemini-cli/gemini-cli.js help",
+    "cli:analyze": "node tools/gemini-cli/gemini-cli.js analyze",
+    "cli:docs": "node tools/gemini-cli/gemini-cli.js docs",
+    "cli:tests": "node tools/gemini-cli/gemini-cli.js tests",
+    "cli:docker": "node tools/gemini-cli/gemini-cli.js optimize-docker",
+    "analyze": "node tools/gemini-cli/gemini-cli.js analyze",
+    "docs": "node tools/gemini-cli/gemini-cli.js docs",
+    "tests": "node tools/gemini-cli/gemini-cli.js tests",
+    "optimize-docker": "node tools/gemini-cli/gemini-cli.js optimize-docker",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nies14/E-Shop.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/nies14/E-Shop/issues"
+  },
+  "homepage": "https://github.com/nies14/E-Shop#readme",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "dotenv": "^17.2.1"
+  }
+}
