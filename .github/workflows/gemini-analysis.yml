@@ -20,10 +20,20 @@ permissions:
 jobs:
   gemini-analysis:
     runs-on: ubuntu-latest
-    # Only run if we have the API key (skip for external forks)
-    if: ${{ secrets.GEMINI_API_KEY != '' }}
     
     steps:
+    - name: 🔑 Check API Key
+      id: check-key
+      run: |
+        if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
+          echo "skip=true" >> $GITHUB_OUTPUT
+          echo "⚠️ GEMINI_API_KEY not found, running in demo mode"
+        else
+          echo "skip=false" >> $GITHUB_OUTPUT
+          echo "✅ GEMINI_API_KEY found, proceeding with AI analysis"
+        fi
+        
+    - name: 🛎️ Checkout Repository
     - name: 🛎️ Checkout Repository
       uses: actions/checkout@v4
       
