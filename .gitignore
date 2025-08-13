@@ -246,3 +246,10 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+
+# Node.js and Gemini CLI
+.env
+package-lock.json
+
+# Generated documentation
+**/API-Documentation.md

@@ -37,6 +37,7 @@ This project is a microservices-based e-commerce application built with .NET 8.0
 - **Visual Studio 2022** / **VS Code** - IDE support
 - **Git** - Version control
 - **Postman** - API testing (optional)
+- **Gemini CLI** - AI-powered project analysis and documentation
 
 ### Architecture Patterns
 - **Microservices Architecture** - Service decomposition
@@ -296,3 +297,50 @@ docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 ```bash
 docker compose down
 ```
+
+## Gemini CLI
+
+This project includes a custom Gemini CLI for AI-powered analysis and documentation generation.
+
+### Setup Gemini CLI
+
+1. **Get your Gemini API key** from [Google AI Studio](https://aistudio.google.com/)
+2. **Copy environment file:**
+   ```bash
+   cp tools/gemini-cli/.env.example .env
+   ```
+3. **Add your API key** to `.env`:
+   ```env
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+
+### Available Commands
+
+```bash
+# Analyze the entire project structure
+npm run analyze
+
+# Generate API documentation for services
+npm run docs Catalog
+npm run docs Basket
+npm run docs Ordering
+npm run docs Discount
+
+# Generate test suggestions
+npm run tests Catalog
+
+# Optimize Dockerfiles
+npm run optimize-docker
+
+# Show help
+node tools/gemini-cli/gemini-cli.js help
+```
+
+### Features
+
+- **🔍 Project Analysis**: AI-powered architecture analysis
+- **📝 Documentation Generation**: Automatic API documentation
+- **🧪 Test Suggestions**: AI-generated test recommendations
+- **🐳 Docker Optimization**: Dockerfile analysis and suggestions
+
+See [tools/gemini-cli/CLI-README.md](tools/gemini-cli/CLI-README.md) for detailed usage instructions.
