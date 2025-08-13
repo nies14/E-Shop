@@ -190,7 +190,9 @@ class EShopGeminiCLI {
     }
 
     getControllers(servicePath) {
-        const controllersPath = path.join(servicePath, service + '.API', 'Controllers');
+        // Extract service name from path (e.g., "/path/to/Catalog" -> "Catalog")
+        const serviceName = path.basename(servicePath);
+        const controllersPath = path.join(servicePath, serviceName + '.API', 'Controllers');
         if (!fs.existsSync(controllersPath)) return 'No controllers found';
         
         return fs.readdirSync(controllersPath)
