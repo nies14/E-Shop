@@ -15,6 +15,7 @@
     "cli:security-scan": "node tools/gemini-cli/gemini-cli.js security-scan",
     "cli:performance-review": "node tools/gemini-cli/gemini-cli.js performance-review",
     "cli:triage-issue": "node tools/gemini-cli/gemini-cli.js triage-issue",
+    "cli:generate": "node tools/gemini-cli/gemini-cli.js generate",
     "cli:advanced-pr-review": "node tools/gemini-cli/gemini-cli.js advanced-pr-review",
     "analyze": "node tools/gemini-cli/gemini-cli.js analyze",
     "docs": "node tools/gemini-cli/gemini-cli.js docs",
