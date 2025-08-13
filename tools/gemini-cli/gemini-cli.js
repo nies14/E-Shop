@@ -27,6 +27,31 @@ class EShopGeminiCLI {
         this.projectRoot = path.resolve(__dirname, '../..');
     }
 
+    async generateContentWithRetry(prompt, maxRetries = 3, delay = 5000) {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`🔄 Attempt ${attempt}/${maxRetries}...`);
+                const result = await this.model.generateContent(prompt);
+                return await result.response;
+            } catch (error) {
+                console.log(`⚠️ Attempt ${attempt} failed: ${error.message}`);
+                
+                if (error.message.includes('503') || error.message.includes('overloaded')) {
+                    if (attempt < maxRetries) {
+                        console.log(`⏳ Waiting ${delay/1000} seconds before retry...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 1.5; // Exponential backoff
+                    } else {
+                        console.log('❌ All retries exhausted. API service appears to be overloaded.');
+                        throw new Error('Gemini API service is temporarily unavailable. Please try again later.');
+                    }
+                } else {
+                    throw error; // Re-throw non-503 errors immediately
+                }
+            }
+        }
+    }
+
     async analyzeProject() {
         if (this.demoMode) {
             console.log('🔍 [DEMO] Analyzing E-Shop microservices project...');
@@ -55,8 +80,7 @@ class EShopGeminiCLI {
         `;
 
         try {
-            const result = await this.model.generateContent(prompt);
-            const response = await result.response;
+            const response = await this.generateContentWithRetry(prompt);
             console.log('\n📊 Project Analysis:\n');
             console.log(response.text());
         } catch (error) {
@@ -358,8 +382,7 @@ class EShopGeminiCLI {
                 Provide specific line numbers and fix suggestions.
                 `;
 
-                const result = await this.model.generateContent(prompt);
-                const response = await result.response;
+                const response = await this.generateContentWithRetry(prompt);
                 securityIssues.push(`\n## ${file}\n${response.text()}`);
             }
             
