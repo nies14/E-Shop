@@ -51,7 +51,7 @@ if: ${{ secrets.GEMINI_API_KEY != '' }}
    Repository → Settings → Secrets and variables → Actions
    → New repository secret
    Name: GEMINI_API_KEY
-   Value: AIzaSyBUroaM_IolgPlR5KiMUvW6j3Ax2_EwoXg
+   Value: [YOUR_ACTUAL_GEMINI_API_KEY]
    ```
 
 2. **Test Workflows:**

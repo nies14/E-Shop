@@ -14,7 +14,7 @@ Based on the failing checks, here are the issues and how to fix them:
 3. Click **New repository secret**
 4. Add:
    - **Name**: `GEMINI_API_KEY`
-   - **Value**: `AIzaSyBUroaM_IolgPlR5KiMUvW6j3Ax2_EwoXg` (your actual key)
+   - **Value**: `[YOUR_ACTUAL_GEMINI_API_KEY]` (your actual key)
 5. Click **Add secret**
 
 ### ❌ **Issue 2: Missing Dependencies**
@@ -36,7 +36,7 @@ Based on the failing checks, here are the issues and how to fix them:
 # You need to do this manually in GitHub UI
 # Repository → Settings → Secrets and variables → Actions → New repository secret
 # Name: GEMINI_API_KEY
-# Value: AIzaSyBUroaM_IolgPlR5KiMUvW6j3Ax2_EwoXg
+# Value: [YOUR_ACTUAL_GEMINI_API_KEY]
 ```
 
 ### Step 2: Verify Local Setup
@@ -50,7 +50,7 @@ npm run validate-setup
 ### Step 3: Test CLI Locally
 ```bash
 # Make sure your API key is in the .env file
-echo "GEMINI_API_KEY=AIzaSyBUroaM_IolgPlR5KiMUvW6j3Ax2_EwoXg" > tools/gemini-cli/.env
+echo "GEMINI_API_KEY=[YOUR_ACTUAL_GEMINI_API_KEY]" > tools/gemini-cli/.env
 
 # Test the CLI
 npm run cli:help
