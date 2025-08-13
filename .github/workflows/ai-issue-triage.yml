@@ -135,16 +135,16 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issueNumber,
-                body: `## 🤖 AI Issue Analysis
-                
-${triageResult.analysis}
+                body: \`## 🤖 AI Issue Analysis
 
-**Suggested Labels:** ${triageResult.suggestedLabels?.join(', ') || 'None'}
-**Priority:** ${triageResult.priority || 'Not determined'}
-**Category:** ${triageResult.category || 'General'}
+\${triageResult.analysis}
+
+**Suggested Labels:** \${triageResult.suggestedLabels?.join(', ') || 'None'}
+**Priority:** \${triageResult.priority || 'Not determined'}
+**Category:** \${triageResult.category || 'General'}
 
 ---
-*This analysis was generated automatically by AI. Please review and adjust as needed.*`
+*This analysis was generated automatically by AI. Please review and adjust as needed.*\`
               });
             }
           }
