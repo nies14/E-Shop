@@ -22,20 +22,13 @@ permissions:
 jobs:
   triage-issue:
     runs-on: ubuntu-latest
+    if: ${{ secrets.GEMINI_API_KEY != '' }}
     
     steps:
     - name: 🛎️ Checkout Repository
       uses: actions/checkout@v4
       
-    - name: � Check API Key
-      run: |
-        if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
-          echo "❌ GEMINI_API_KEY secret is not set"
-          exit 1
-        fi
-        echo "✅ API key is configured"
-      
-    - name: �🟢 Setup Node.js
+    - name: 🟢 Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
@@ -138,19 +131,20 @@ jobs:
             
             // Add AI analysis comment
             if (triageResult.analysis) {
-              const commentBody = "## 🤖 AI Issue Analysis\n\n" +
-                triageResult.analysis + "\n\n" +
-                "**Suggested Labels:** " + (triageResult.suggestedLabels?.join(', ') || 'None') + "\n" +
-                "**Priority:** " + (triageResult.priority || 'Not determined') + "\n" +
-                "**Category:** " + (triageResult.category || 'General') + "\n\n" +
-                "---\n" +
-                "*This analysis was generated automatically by AI. Please review and adjust as needed.*";
-              
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issueNumber,
-                body: commentBody
+                body: \`## 🤖 AI Issue Analysis
+
+\${triageResult.analysis}
+
+**Suggested Labels:** \${triageResult.suggestedLabels?.join(', ') || 'None'}
+**Priority:** \${triageResult.priority || 'Not determined'}
+**Category:** \${triageResult.category || 'General'}
+
+---
+*This analysis was generated automatically by AI. Please review and adjust as needed.*\`
               });
             }
           }
