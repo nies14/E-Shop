@@ -662,21 +662,25 @@ class EShopGeminiCLI {
             console.error('❌ Error in advanced PR review:', error.message);
         }
     }
+
+    showHelp() {
         console.log(`
-�🚀 E-Shop Gemini CLI
+🚀 E-Shop Gemini CLI
 
 Usage: node gemini-cli.js <command> [options]
 
 Commands:
-  analyze                    Analyze the entire project structure
-  docs <service>            Generate API documentation for a service
-  tests <service>           Suggest test cases for a service
-  optimize-docker           Optimize Dockerfiles in the project
-  review-pr <number> [type] Review a Pull Request (types: full, security, performance, architecture)
-  implement-suggestions <pr> Generate specific implementation suggestions
-  security-scan             Perform comprehensive security analysis
-  performance-review        Analyze performance characteristics
-  help                      Show this help message
+  analyze                         Analyze the entire project structure
+  docs <service>                 Generate API documentation for a service
+  tests <service>                Suggest test cases for a service
+  optimize-docker                Optimize Dockerfiles in the project
+  review-pr <number> [type]      Review a Pull Request (types: full, security, performance, architecture)
+  implement-suggestions <pr>     Generate specific implementation suggestions
+  security-scan                  Perform comprehensive security analysis
+  performance-review             Analyze performance characteristics
+  triage-issue <number>          Triage and analyze GitHub issues
+  advanced-pr-review <number> [type]  Advanced PR review (types: comprehensive, security-focused, performance-focused, quick)
+  help                           Show this help message
 
 Examples:
   node gemini-cli.js analyze
@@ -687,6 +691,8 @@ Examples:
   node gemini-cli.js implement-suggestions 123
   node gemini-cli.js security-scan
   node gemini-cli.js performance-review
+  node gemini-cli.js triage-issue 456
+  node gemini-cli.js advanced-pr-review 123 security-focused
 
 Services: Catalog, Basket, Ordering, Discount
 
