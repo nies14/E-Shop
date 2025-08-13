@@ -35,9 +35,20 @@ permissions:
 jobs:
   ai-pr-review:
     runs-on: ubuntu-latest
-    if: ${{ secrets.GEMINI_API_KEY != '' && !contains(github.event.pull_request.labels.*.name, 'skip-ai-review') }}
     
     steps:
+    - name: 🔑 Check API Key and Skip Label
+      run: |
+        if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
+          echo "❌ GEMINI_API_KEY secret is not set"
+          exit 1
+        fi
+        if echo "${{ toJson(github.event.pull_request.labels) }}" | grep -q "skip-ai-review"; then
+          echo "⏭️ Skipping AI review due to label"
+          exit 0
+        fi
+        echo "✅ API key and labels are valid"
+        
     - name: 🛎️ Checkout PR
       uses: actions/checkout@v4
       with:
