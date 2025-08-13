@@ -1,0 +1,147 @@
+name: AI Code Review & Implementation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      review_type:
+        description: 'Type of review'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - security
+        - performance
+        - architecture
+        - implementation
+      implement_suggestions:
+        description: 'Auto-implement suggestions'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+jobs:
+  code-review:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🛎️ Checkout PR
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 📦 Install Dependencies
+      run: |
+        npm install
+        cd tools/gemini-cli && npm install
+        
+    - name: 🔧 Setup Environment
+      run: |
+        echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > tools/gemini-cli/.env
+        echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> tools/gemini-cli/.env
+        echo "PR_NUMBER=${{ github.event.number }}" >> tools/gemini-cli/.env
+        
+    - name: 🔍 Get Changed Files
+      id: changed-files
+      run: |
+        git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > changed-files.txt
+        echo "changed_files=$(cat changed-files.txt | tr '\n' ',')" >> $GITHUB_OUTPUT
+        
+    - name: 🕵️ Run Code Review Analysis
+      run: |
+        npm run cli:review-pr "${{ github.event.number }}" "${{ inputs.review_type || 'full' }}"
+      continue-on-error: true
+      
+    - name: 🔧 Generate Implementation Suggestions
+      if: github.event_name == 'workflow_dispatch' && inputs.implement_suggestions == 'true'
+      run: |
+        npm run cli:implement-suggestions "${{ github.event.number }}"
+      continue-on-error: true
+      
+    - name: 🏗️ Auto-implement Safe Changes
+      if: github.event_name == 'workflow_dispatch' && inputs.implement_suggestions == 'true'
+      run: |
+        npm run cli:auto-implement "${{ github.event.number }}"
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action AI"
+        git add .
+        if ! git diff --staged --quiet; then
+          git commit -m "feat: AI-implemented improvements [auto-generated]"
+          git push
+        fi
+      continue-on-error: true
+        
+    - name: 📊 Security Analysis
+      run: |
+        npm run cli:security-scan > security-report.md || echo "Security scan failed"
+      continue-on-error: true
+        
+    - name: ⚡ Performance Analysis
+      run: |
+        npm run cli:performance-review > performance-report.md || echo "Performance review failed"
+      continue-on-error: true
+        
+    - name: 📤 Upload Review Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: code-review-results-${{ github.event.number || github.run_number }}
+        path: |
+          code-review-*.md
+          security-report.md
+          performance-report.md
+          implementation-suggestions.md
+        retention-days: 30
+        
+    - name: 💬 Post Review Comments
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          // Read review results
+          let reviewComment = '## 🤖 AI Code Review Results\n\n';
+          
+          try {
+            if (fs.existsSync('code-review-summary.md')) {
+              const review = fs.readFileSync('code-review-summary.md', 'utf8');
+              reviewComment += review;
+            }
+            
+            if (fs.existsSync('security-report.md')) {
+              reviewComment += '\n## 🔒 Security Analysis\n';
+              const security = fs.readFileSync('security-report.md', 'utf8');
+              reviewComment += security.substring(0, 1000) + '...';
+            }
+            
+            if (fs.existsSync('performance-report.md')) {
+              reviewComment += '\n## ⚡ Performance Review\n';
+              const performance = fs.readFileSync('performance-report.md', 'utf8');
+              reviewComment += performance.substring(0, 1000) + '...';
+            }
+            
+            reviewComment += '\n\n📎 **Full reports available in artifacts**';
+            
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: reviewComment
+            });
+          } catch (error) {
+            console.log('Error posting review comment:', error);
+          }

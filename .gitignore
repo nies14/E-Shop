@@ -253,3 +253,9 @@ package-lock.json
 
 # Generated documentation
 **/API-Documentation.md
+test-suggestions-*.md
+docker-optimization.md
+PROJECT-ANALYSIS.md
+
+# GitHub Actions artifacts
+.github/workflows/artifacts/

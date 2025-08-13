@@ -1,0 +1,58 @@
+name: Auto Documentation Update
+
+on:
+  schedule:
+    - cron: '0 2 * * 1' # Every Monday at 2 AM UTC
+  workflow_dispatch:
+
+env:
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🛎️ Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 📦 Install Dependencies
+      run: |
+        npm install
+        cd tools/gemini-cli && npm install
+        
+    - name: 🔧 Setup Environment
+      run: |
+        echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > tools/gemini-cli/.env
+        
+    - name: 📝 Generate Updated Documentation
+      run: |
+        npm run cli:docs Catalog || echo "Catalog docs failed"
+        npm run cli:docs Basket || echo "Basket docs failed"
+        npm run cli:docs Ordering || echo "Ordering docs failed"
+        npm run cli:docs Discount || echo "Discount docs failed"
+      continue-on-error: true
+        
+    - name: 📊 Update Project Analysis
+      run: npm run cli:analyze > PROJECT-ANALYSIS.md || echo "Analysis failed"
+      continue-on-error: true
+      
+    - name: 🔄 Commit Changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "docs: Update AI-generated documentation [skip ci]"
+          git push
+        fi

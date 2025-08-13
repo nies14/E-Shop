@@ -10,10 +10,18 @@
     "cli:docs": "node tools/gemini-cli/gemini-cli.js docs",
     "cli:tests": "node tools/gemini-cli/gemini-cli.js tests",
     "cli:docker": "node tools/gemini-cli/gemini-cli.js optimize-docker",
+    "cli:review-pr": "node tools/gemini-cli/gemini-cli.js review-pr",
+    "cli:implement-suggestions": "node tools/gemini-cli/gemini-cli.js implement-suggestions",
+    "cli:security-scan": "node tools/gemini-cli/gemini-cli.js security-scan",
+    "cli:performance-review": "node tools/gemini-cli/gemini-cli.js performance-review",
     "analyze": "node tools/gemini-cli/gemini-cli.js analyze",
     "docs": "node tools/gemini-cli/gemini-cli.js docs",
     "tests": "node tools/gemini-cli/gemini-cli.js tests",
     "optimize-docker": "node tools/gemini-cli/gemini-cli.js optimize-docker",
+    "ci:install": "npm install && cd tools/gemini-cli && npm install",
+    "ci:docs": "npm run cli:docs Catalog && npm run cli:docs Basket && npm run cli:docs Ordering && npm run cli:docs Discount",
+    "ci:analysis": "npm run cli:analyze",
+    "validate-setup": "node tools/validate-setup.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

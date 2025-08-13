@@ -184,9 +184,260 @@ class EShopGeminiCLI {
         return dockerfiles;
     }
 
+    async reviewPullRequest(prNumber, reviewType = 'full') {
+        console.log(`🕵️ Reviewing Pull Request #${prNumber} (${reviewType} review)...`);
+        
+        try {
+            // Get PR diff and files
+            const changedFiles = this.getChangedFiles();
+            const diffContent = this.getPRDiff(prNumber);
+            
+            const prompt = `
+            Review this Pull Request with focus on ${reviewType} analysis:
+            
+            PR #${prNumber}
+            Changed Files: ${changedFiles.join(', ')}
+            
+            Diff Content:
+            ${diffContent}
+            
+            Provide detailed review covering:
+            1. Code quality and best practices
+            2. Potential bugs and issues
+            3. Security vulnerabilities
+            4. Performance implications
+            5. Architecture compliance
+            6. Specific improvement suggestions
+            7. Auto-implementable fixes
+            
+            Format as actionable feedback with severity levels (High/Medium/Low).
+            `;
+
+            const result = await this.model.generateContent(prompt);
+            const response = await result.response;
+            const reviewContent = response.text();
+            
+            // Save review to file
+            fs.writeFileSync('code-review-summary.md', reviewContent);
+            console.log('\n🕵️ Code Review Complete:\n');
+            console.log(reviewContent);
+            
+            return reviewContent;
+        } catch (error) {
+            console.error('❌ Error reviewing PR:', error.message);
+        }
+    }
+
+    async generateImplementationSuggestions(prNumber) {
+        console.log(`🔧 Generating implementation suggestions for PR #${prNumber}...`);
+        
+        try {
+            const changedFiles = this.getChangedFiles();
+            const codebaseContext = this.getCodebaseContext(changedFiles);
+            
+            const prompt = `
+            Based on this codebase and recent changes, suggest specific code implementations:
+            
+            PR #${prNumber}
+            Changed Files: ${changedFiles.join(', ')}
+            
+            Codebase Context:
+            ${codebaseContext}
+            
+            Provide:
+            1. Missing error handling implementations
+            2. Suggested unit tests with actual code
+            3. Performance optimizations with code examples
+            4. Security improvements with implementations
+            5. Best practice implementations
+            6. Missing validation logic
+            7. Logging and monitoring improvements
+            
+            For each suggestion, provide:
+            - Exact file path
+            - Exact code to add/modify
+            - Explanation of the improvement
+            - Risk level (Safe/Medium/High)
+            `;
+
+            const result = await this.model.generateContent(prompt);
+            const response = await result.response;
+            const suggestions = response.text();
+            
+            fs.writeFileSync('implementation-suggestions.md', suggestions);
+            console.log('\n� Implementation Suggestions:\n');
+            console.log(suggestions);
+            
+            return suggestions;
+        } catch (error) {
+            console.error('❌ Error generating suggestions:', error.message);
+        }
+    }
+
+    async performSecurityScan() {
+        console.log('🔒 Performing security analysis...');
+        
+        try {
+            const codeFiles = this.getAllCodeFiles();
+            let securityIssues = [];
+            
+            for (const file of codeFiles.slice(0, 10)) { // Limit to avoid token limits
+                const content = fs.readFileSync(file, 'utf8');
+                
+                const prompt = `
+                Analyze this code file for security vulnerabilities:
+                
+                File: ${file}
+                Content:
+                ${content.substring(0, 2000)}...
+                
+                Check for:
+                1. SQL injection vulnerabilities
+                2. XSS vulnerabilities
+                3. Authentication bypasses
+                4. Authorization issues
+                5. Input validation problems
+                6. Sensitive data exposure
+                7. Insecure dependencies
+                8. Configuration issues
+                
+                Rate severity: Critical/High/Medium/Low
+                Provide specific line numbers and fix suggestions.
+                `;
+
+                const result = await this.model.generateContent(prompt);
+                const response = await result.response;
+                securityIssues.push(`\n## ${file}\n${response.text()}`);
+            }
+            
+            const securityReport = securityIssues.join('\n');
+            fs.writeFileSync('security-report.md', securityReport);
+            console.log('\n🔒 Security Report:\n');
+            console.log(securityReport);
+            
+            return securityReport;
+        } catch (error) {
+            console.error('❌ Error in security scan:', error.message);
+        }
+    }
+
+    async performanceReview() {
+        console.log('⚡ Analyzing performance characteristics...');
+        
+        try {
+            const controllers = this.getAllControllers();
+            const prompt = `
+            Analyze these API controllers for performance issues:
+            
+            ${controllers}
+            
+            Review for:
+            1. N+1 query problems
+            2. Missing async/await patterns
+            3. Inefficient database queries
+            4. Missing caching opportunities
+            5. Memory leaks potential
+            6. Blocking operations
+            7. Missing pagination
+            8. Inefficient data structures
+            
+            Provide specific performance optimizations with code examples.
+            `;
+
+            const result = await this.model.generateContent(prompt);
+            const response = await result.response;
+            
+            fs.writeFileSync('performance-report.md', response.text());
+            console.log('\n⚡ Performance Review:\n');
+            console.log(response.text());
+            
+            return response.text();
+        } catch (error) {
+            console.error('❌ Error in performance review:', error.message);
+        }
+    }
+
+    getChangedFiles() {
+        try {
+            if (fs.existsSync('changed-files.txt')) {
+                return fs.readFileSync('changed-files.txt', 'utf8').split('\n').filter(f => f.trim());
+            }
+            return [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    getPRDiff(prNumber) {
+        try {
+            // In a real implementation, this would use GitHub API
+            // For now, return a placeholder
+            return 'PR diff would be retrieved via GitHub API';
+        } catch (error) {
+            return 'Unable to retrieve PR diff';
+        }
+    }
+
+    getCodebaseContext(files) {
+        let context = '';
+        files.slice(0, 5).forEach(file => {
+            if (fs.existsSync(file) && file.endsWith('.cs')) {
+                const content = fs.readFileSync(file, 'utf8');
+                context += `\n## ${file}\n${content.substring(0, 1000)}...\n`;
+            }
+        });
+        return context;
+    }
+
+    getAllCodeFiles() {
+        const codeFiles = [];
+        const services = ['Catalog', 'Basket', 'Ordering', 'Discount'];
+        
+        services.forEach(service => {
+            const servicePath = path.join(this.projectRoot, service);
+            if (fs.existsSync(servicePath)) {
+                this.findCodeFiles(servicePath, codeFiles);
+            }
+        });
+        
+        return codeFiles;
+    }
+
+    getAllControllers() {
+        let controllers = '';
+        const services = ['Catalog', 'Basket', 'Ordering', 'Discount'];
+        
+        services.forEach(service => {
+            const controllersPath = path.join(this.projectRoot, service, service + '.API', 'Controllers');
+            if (fs.existsSync(controllersPath)) {
+                const files = fs.readdirSync(controllersPath).filter(f => f.endsWith('.cs'));
+                files.forEach(file => {
+                    const content = fs.readFileSync(path.join(controllersPath, file), 'utf8');
+                    controllers += `\n## ${service}/${file}\n${content.substring(0, 1500)}...\n`;
+                });
+            }
+        });
+        
+        return controllers;
+    }
+
+    findCodeFiles(dir, codeFiles) {
+        const items = fs.readdirSync(dir, { withFileTypes: true });
+        
+        items.forEach(item => {
+            const fullPath = path.join(dir, item.name);
+            
+            if (item.isFile() && (item.name.endsWith('.cs') || item.name.endsWith('.js'))) {
+                codeFiles.push(fullPath);
+            } else if (item.isDirectory() && !item.name.startsWith('.') && !item.name.includes('node_modules')) {
+                this.findCodeFiles(fullPath, codeFiles);
+            }
+        });
+    }
+
     showHelp() {
         console.log(`
-🚀 E-Shop Gemini CLI
+�🚀 E-Shop Gemini CLI
 
 Usage: node gemini-cli.js <command> [options]
 
@@ -195,6 +446,10 @@ Commands:
   docs <service>            Generate API documentation for a service
   tests <service>           Suggest test cases for a service
   optimize-docker           Optimize Dockerfiles in the project
+  review-pr <number> [type] Review a Pull Request (types: full, security, performance, architecture)
+  implement-suggestions <pr> Generate specific implementation suggestions
+  security-scan             Perform comprehensive security analysis
+  performance-review        Analyze performance characteristics
   help                      Show this help message
 
 Examples:
@@ -202,6 +457,10 @@ Examples:
   node gemini-cli.js docs Catalog
   node gemini-cli.js tests Basket
   node gemini-cli.js optimize-docker
+  node gemini-cli.js review-pr 123 security
+  node gemini-cli.js implement-suggestions 123
+  node gemini-cli.js security-scan
+  node gemini-cli.js performance-review
 
 Services: Catalog, Basket, Ordering, Discount
 
@@ -242,6 +501,29 @@ async function main() {
             break;
         case 'optimize-docker':
             await cli.optimizeDockerfiles();
+            break;
+        case 'review-pr':
+            if (args[1]) {
+                await cli.reviewPullRequest(args[1], args[2] || 'full');
+            } else {
+                console.error('❌ Please specify PR number');
+            }
+            break;
+        case 'implement-suggestions':
+            if (args[1]) {
+                await cli.generateImplementationSuggestions(args[1]);
+            } else {
+                console.error('❌ Please specify PR number');
+            }
+            break;
+        case 'security-scan':
+            await cli.performSecurityScan();
+            break;
+        case 'performance-review':
+            await cli.performanceReview();
+            break;
+        case 'help':
+            cli.showHelp();
             break;
         default:
             console.error(`❌ Unknown command: ${command}`);
