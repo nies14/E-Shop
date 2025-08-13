@@ -26,9 +26,17 @@ on:
 env:
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
+
 jobs:
   code-review:
     runs-on: ubuntu-latest
+    # Only run if we have the API key (skip for external forks)
+    if: ${{ secrets.GEMINI_API_KEY != '' }}
     
     steps:
     - name: 🛎️ Checkout PR
@@ -45,8 +53,15 @@ jobs:
         
     - name: 📦 Install Dependencies
       run: |
+        # Install main project dependencies
         npm install
-        cd tools/gemini-cli && npm install
+        
+        # Check if gemini-cli directory exists and has package.json
+        if [ -d "tools/gemini-cli" ] && [ -f "tools/gemini-cli/package.json" ]; then
+          cd tools/gemini-cli && npm install
+        else
+          echo "⚠️ Gemini CLI package.json not found, skipping CLI dependencies"
+        fi
         
     - name: 🔧 Setup Environment
       run: |

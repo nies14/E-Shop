@@ -7,12 +7,39 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 class EShopGeminiCLI {
     constructor() {
-        this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const apiKey = process.env.GEMINI_API_KEY;
+        
+        if (!apiKey || apiKey === 'demo_key_replace_with_real_key' || apiKey === 'your_gemini_api_key_here') {
+            console.log('⚠️  Running in DEMO mode - No valid API key found');
+            console.log('🔑 To enable AI features:');
+            console.log('   1. Get a Gemini API key from https://makersuite.google.com/app/apikey');
+            console.log('   2. Add it to your .env file: GEMINI_API_KEY=your_actual_key');
+            console.log('   3. For repository maintainers: Add as GitHub secret');
+            this.demoMode = true;
+            this.genAI = null;
+            this.model = null;
+        } else {
+            this.genAI = new GoogleGenerativeAI(apiKey);
+            this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            this.demoMode = false;
+        }
+        
         this.projectRoot = path.resolve(__dirname, '../..');
     }
 
     async analyzeProject() {
+        if (this.demoMode) {
+            console.log('🔍 [DEMO] Analyzing E-Shop microservices project...');
+            console.log('\n📊 [DEMO] Project Analysis:\n');
+            console.log('This is a demo response. The actual analysis would include:');
+            console.log('- Architecture pattern evaluation');
+            console.log('- Microservices best practices review');
+            console.log('- Potential improvements and recommendations');
+            console.log('- Missing components identification');
+            console.log('\n🔑 Add a real Gemini API key to see actual AI analysis.');
+            return;
+        }
+        
         console.log('🔍 Analyzing E-Shop microservices project...');
         
         const projectStructure = this.getProjectStructure();
@@ -38,6 +65,18 @@ class EShopGeminiCLI {
     }
 
     async generateDocumentation(service) {
+        if (this.demoMode) {
+            console.log(`📝 [DEMO] Generating documentation for ${service} service...`);
+            console.log(`\n📚 [DEMO] ${service} Service Documentation:\n`);
+            console.log('This is a demo response. The actual documentation would include:');
+            console.log('- Complete API endpoint documentation');
+            console.log('- Request/response models');
+            console.log('- Authentication requirements');
+            console.log('- Error codes and handling');
+            console.log('\n🔑 Add a real Gemini API key to see actual AI-generated documentation.');
+            return;
+        }
+        
         console.log(`📝 Generating documentation for ${service} service...`);
         
         const servicePath = path.join(this.projectRoot, service);
@@ -185,6 +224,18 @@ class EShopGeminiCLI {
     }
 
     async reviewPullRequest(prNumber, reviewType = 'full') {
+        if (this.demoMode) {
+            console.log(`🕵️ [DEMO] Reviewing Pull Request #${prNumber} (${reviewType} review)...`);
+            console.log('\n🕵️ [DEMO] Code Review Complete:\n');
+            console.log('This is a demo response. The actual review would include:');
+            console.log('- Code quality analysis');
+            console.log('- Security vulnerability detection');
+            console.log('- Performance optimization suggestions');
+            console.log('- Best practices recommendations');
+            console.log('\n🔑 Add a real Gemini API key to see actual AI code review.');
+            return;
+        }
+        
         console.log(`🕵️ Reviewing Pull Request #${prNumber} (${reviewType} review)...`);
         
         try {

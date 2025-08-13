@@ -12,8 +12,8 @@
     "optimize-docker": "node gemini-cli.js optimize-docker"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
-    "dotenv": "^16.4.7"
+    "@google/generative-ai": "^0.24.1",
+    "dotenv": "^17.2.1"
   },
   "keywords": [
     "gemini",
