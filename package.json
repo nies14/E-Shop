@@ -14,6 +14,8 @@
     "cli:implement-suggestions": "node tools/gemini-cli/gemini-cli.js implement-suggestions",
     "cli:security-scan": "node tools/gemini-cli/gemini-cli.js security-scan",
     "cli:performance-review": "node tools/gemini-cli/gemini-cli.js performance-review",
+    "cli:triage-issue": "node tools/gemini-cli/gemini-cli.js triage-issue",
+    "cli:advanced-pr-review": "node tools/gemini-cli/gemini-cli.js advanced-pr-review",
     "analyze": "node tools/gemini-cli/gemini-cli.js analyze",
     "docs": "node tools/gemini-cli/gemini-cli.js docs",
     "tests": "node tools/gemini-cli/gemini-cli.js tests",

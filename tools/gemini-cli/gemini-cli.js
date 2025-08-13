@@ -486,7 +486,182 @@ class EShopGeminiCLI {
         });
     }
 
-    showHelp() {
+    async triageIssue(issueNumber) {
+        if (this.demoMode) {
+            console.log(`🎯 [DEMO] Triaging Issue #${issueNumber}...`);
+            console.log('\n🎯 [DEMO] Issue Triage Complete:\n');
+            console.log('This is a demo response. The actual triage would include:');
+            console.log('- Automatic labeling (bug, feature, documentation, etc.)');
+            console.log('- Priority assessment (high, medium, low)');
+            console.log('- Team assignment suggestions');
+            console.log('- Related issue detection');
+            console.log('\n🔑 Add a real Gemini API key to see actual AI issue triage.');
+            return;
+        }
+        
+        console.log(`🎯 Triaging Issue #${issueNumber}...`);
+        
+        try {
+            let issueData = {};
+            
+            // Try to read issue data from file
+            if (fs.existsSync('issue-data.json')) {
+                issueData = JSON.parse(fs.readFileSync('issue-data.json', 'utf8'));
+            }
+            
+            const prompt = `
+            Analyze this GitHub issue and provide triage recommendations:
+            
+            Issue #${issueNumber}
+            Title: ${issueData.title || 'No title available'}
+            Body: ${issueData.body || 'No description available'}
+            Author: ${issueData.author || 'Unknown'}
+            Current Labels: ${issueData.labels?.join(', ') || 'None'}
+            Comments: ${issueData.comments || 'None'}
+            
+            Provide detailed triage analysis including:
+            1. Issue categorization (bug, feature, documentation, question, etc.)
+            2. Priority level (critical, high, medium, low)
+            3. Suggested labels
+            4. Estimated complexity (simple, moderate, complex)
+            5. Recommended team/person assignment
+            6. Similar issues or duplicates
+            7. Required information if incomplete
+            8. Suggested next steps
+            
+            Format response as JSON with fields: category, priority, suggestedLabels, complexity, assignee, analysis, nextSteps
+            `;
+
+            const result = await this.model.generateContent(prompt);
+            const response = await result.response;
+            const triageText = response.text();
+            
+            // Try to extract JSON from response
+            let triageResult;
+            try {
+                const jsonMatch = triageText.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    triageResult = JSON.parse(jsonMatch[0]);
+                } else {
+                    triageResult = {
+                        category: 'general',
+                        priority: 'medium',
+                        suggestedLabels: ['needs-triage'],
+                        analysis: triageText
+                    };
+                }
+            } catch (e) {
+                triageResult = {
+                    category: 'general',
+                    priority: 'medium',
+                    suggestedLabels: ['needs-triage'],
+                    analysis: triageText
+                };
+            }
+            
+            // Save results
+            fs.writeFileSync('issue-triage-result.json', JSON.stringify(triageResult, null, 2));
+            
+            console.log('\n🎯 Issue Triage Results:\n');
+            console.log(`Category: ${triageResult.category}`);
+            console.log(`Priority: ${triageResult.priority}`);
+            console.log(`Suggested Labels: ${triageResult.suggestedLabels?.join(', ')}`);
+            console.log(`\nAnalysis: ${triageResult.analysis}`);
+            
+            return triageResult;
+        } catch (error) {
+            console.error('❌ Error triaging issue:', error.message);
+        }
+    }
+
+    async advancedPRReview(prNumber, reviewType = 'comprehensive') {
+        if (this.demoMode) {
+            console.log(`🔬 [DEMO] Advanced PR Review #${prNumber} (${reviewType})...`);
+            console.log('\n🔬 [DEMO] Advanced Review Complete:\n');
+            console.log('This is a demo response. The actual review would include:');
+            console.log('- Comprehensive code quality analysis');
+            console.log('- Security vulnerability detection');
+            console.log('- Performance bottleneck identification');
+            console.log('- Architecture compliance checking');
+            console.log('- Test coverage recommendations');
+            console.log('\n🔑 Add a real Gemini API key to see actual AI PR review.');
+            return;
+        }
+        
+        console.log(`🔬 Performing ${reviewType} review of PR #${prNumber}...`);
+        
+        try {
+            let prData = {};
+            
+            // Try to read PR data from file
+            if (fs.existsSync('pr-data.json')) {
+                prData = JSON.parse(fs.readFileSync('pr-data.json', 'utf8'));
+            }
+            
+            const changedFiles = prData.files?.map(f => f.filename).join(', ') || 'Unknown files';
+            const totalChanges = prData.files?.reduce((sum, f) => sum + f.changes, 0) || 0;
+            
+            let promptFocus = '';
+            switch (reviewType) {
+                case 'security-focused':
+                    promptFocus = 'Focus heavily on security vulnerabilities, authentication, authorization, input validation, and data exposure risks.';
+                    break;
+                case 'performance-focused':
+                    promptFocus = 'Focus on performance implications, database queries, caching, async patterns, and optimization opportunities.';
+                    break;
+                case 'quick':
+                    promptFocus = 'Provide a quick overview focusing on major issues and critical problems only.';
+                    break;
+                default:
+                    promptFocus = 'Provide comprehensive analysis covering all aspects of code quality, security, performance, and best practices.';
+            }
+            
+            const prompt = `
+            ${promptFocus}
+            
+            Analyze this Pull Request:
+            
+            PR #${prNumber}: ${prData.title || 'No title'}
+            Description: ${prData.body || 'No description'}
+            Author: ${prData.author || 'Unknown'}
+            Changed Files: ${changedFiles}
+            Total Changes: ${totalChanges} lines
+            Base Branch: ${prData.base_branch || 'unknown'}
+            
+            File Changes Summary:
+            ${prData.files?.map(f => `- ${f.filename} (+${f.additions}/-${f.deletions})`).join('\n') || 'No file details'}
+            
+            Provide detailed analysis including:
+            1. Code quality assessment
+            2. Security vulnerabilities and risks
+            3. Performance implications
+            4. Architecture and design patterns compliance
+            5. Error handling and edge cases
+            6. Testing recommendations
+            7. Documentation needs
+            8. Breaking changes assessment
+            9. Deployment considerations
+            10. Specific actionable recommendations
+            
+            Rate severity levels: Critical, High, Medium, Low
+            Provide specific file names and line references where possible.
+            `;
+
+            const result = await this.model.generateContent(prompt);
+            const response = await result.response;
+            const reviewContent = response.text();
+            
+            // Save comprehensive review
+            fs.writeFileSync('code-review-summary.md', reviewContent);
+            
+            console.log('\n🔬 Advanced PR Review Complete:\n');
+            console.log(reviewContent);
+            
+            return reviewContent;
+        } catch (error) {
+            console.error('❌ Error in advanced PR review:', error.message);
+        }
+    }
         console.log(`
 �🚀 E-Shop Gemini CLI
 
@@ -572,6 +747,20 @@ async function main() {
             break;
         case 'performance-review':
             await cli.performanceReview();
+            break;
+        case 'triage-issue':
+            if (args[1]) {
+                await cli.triageIssue(args[1]);
+            } else {
+                console.error('❌ Please specify issue number');
+            }
+            break;
+        case 'advanced-pr-review':
+            if (args[1]) {
+                await cli.advancedPRReview(args[1], args[2] || 'comprehensive');
+            } else {
+                console.error('❌ Please specify PR number');
+            }
             break;
         case 'help':
             cli.showHelp();

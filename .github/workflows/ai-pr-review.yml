@@ -1,0 +1,264 @@
+name: AI Pull Request Review & Analysis
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [ main, develop ]
+  pull_request_review:
+    types: [submitted]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+        type: string
+      review_depth:
+        description: 'Review depth'
+        required: false
+        default: 'comprehensive'
+        type: choice
+        options:
+        - quick
+        - comprehensive
+        - security-focused
+        - performance-focused
+
+env:
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: write
+
+jobs:
+  ai-pr-review:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.GEMINI_API_KEY != '' && !contains(github.event.pull_request.labels.*.name, 'skip-ai-review') }}
+    
+    steps:
+    - name: 🛎️ Checkout PR
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 📦 Install Dependencies
+      run: |
+        npm install
+        if [ -d "tools/gemini-cli" ] && [ -f "tools/gemini-cli/package.json" ]; then
+          cd tools/gemini-cli && npm install
+        fi
+        
+    - name: 🔧 Setup Environment
+      run: |
+        echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > tools/gemini-cli/.env
+        echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> tools/gemini-cli/.env
+        echo "PR_NUMBER=${{ github.event.pull_request.number || inputs.pr_number }}" >> tools/gemini-cli/.env
+        
+    - name: 📊 Get PR Details
+      id: pr-details
+      uses: actions/github-script@v7
+      with:
+        result-encoding: string
+        script: |
+          const prNumber = ${{ github.event.pull_request.number || inputs.pr_number }};
+          
+          // Get PR details
+          const { data: pr } = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: prNumber
+          });
+          
+          // Get changed files
+          const { data: files } = await github.rest.pulls.listFiles({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: prNumber
+          });
+          
+          // Get diff
+          const { data: diff } = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: prNumber,
+            mediaType: { format: 'diff' }
+          });
+          
+          return JSON.stringify({
+            title: pr.title,
+            body: pr.body || '',
+            author: pr.user.login,
+            files: files.map(f => ({
+              filename: f.filename,
+              status: f.status,
+              additions: f.additions,
+              deletions: f.deletions,
+              changes: f.changes,
+              patch: f.patch
+            })),
+            diff: diff,
+            base_branch: pr.base.ref,
+            head_branch: pr.head.ref,
+            url: pr.html_url
+          });
+          
+    - name: 🔍 AI Code Review Analysis
+      run: |
+        echo '${{ steps.pr-details.outputs.result }}' > pr-data.json
+        npm run cli:review-pr ${{ github.event.pull_request.number || inputs.pr_number }} ${{ inputs.review_depth || 'comprehensive' }}
+      continue-on-error: true
+      
+    - name: 🛡️ Security Scan
+      run: |
+        npm run cli:security-scan > security-scan-result.md || echo "Security scan completed with warnings"
+      continue-on-error: true
+      
+    - name: ⚡ Performance Analysis
+      run: |
+        npm run cli:performance-review > performance-analysis.md || echo "Performance analysis completed"
+      continue-on-error: true
+      
+    - name: 🧪 Generate Test Suggestions
+      run: |
+        # Generate test suggestions for each changed service
+        echo '${{ steps.pr-details.outputs.result }}' | jq -r '.files[].filename' | grep -E '(Catalog|Basket|Ordering|Discount)' | head -3 | while read file; do
+          if [[ $file == *"Catalog"* ]]; then
+            npm run cli:tests Catalog > test-suggestions-catalog.md || echo "Catalog test suggestions failed"
+          elif [[ $file == *"Basket"* ]]; then
+            npm run cli:tests Basket > test-suggestions-basket.md || echo "Basket test suggestions failed"
+          elif [[ $file == *"Ordering"* ]]; then
+            npm run cli:tests Ordering > test-suggestions-ordering.md || echo "Ordering test suggestions failed"
+          elif [[ $file == *"Discount"* ]]; then
+            npm run cli:tests Discount > test-suggestions-discount.md || echo "Discount test suggestions failed"
+          fi
+        done
+      continue-on-error: true
+      
+    - name: 📝 Generate Implementation Suggestions
+      run: |
+        npm run cli:implement-suggestions ${{ github.event.pull_request.number || inputs.pr_number }} > implementation-suggestions.md || echo "Implementation suggestions generated"
+      continue-on-error: true
+      
+    - name: 💬 Post AI Review Comment
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const prNumber = ${{ github.event.pull_request.number || inputs.pr_number }};
+          
+          let reviewComment = `## 🤖 AI Code Review Analysis\n\n`;
+          reviewComment += `**Review Type:** ${{ inputs.review_depth || 'comprehensive' }}\n`;
+          reviewComment += `**Analyzed by:** Gemini CLI\n\n`;
+          
+          // Main code review
+          if (fs.existsSync('code-review-summary.md')) {
+            const review = fs.readFileSync('code-review-summary.md', 'utf8');
+            reviewComment += `### 📊 Code Analysis\n${review.substring(0, 2000)}...\n\n`;
+          }
+          
+          // Security findings
+          if (fs.existsSync('security-scan-result.md')) {
+            const security = fs.readFileSync('security-scan-result.md', 'utf8');
+            if (security.length > 100) {
+              reviewComment += `### 🔒 Security Analysis\n${security.substring(0, 1000)}...\n\n`;
+            }
+          }
+          
+          // Performance insights
+          if (fs.existsSync('performance-analysis.md')) {
+            const performance = fs.readFileSync('performance-analysis.md', 'utf8');
+            if (performance.length > 100) {
+              reviewComment += `### ⚡ Performance Review\n${performance.substring(0, 1000)}...\n\n`;
+            }
+          }
+          
+          // Implementation suggestions
+          if (fs.existsSync('implementation-suggestions.md')) {
+            reviewComment += `### 🔧 Implementation Suggestions\n`;
+            reviewComment += `See the uploaded artifacts for detailed implementation recommendations.\n\n`;
+          }
+          
+          // Test suggestions
+          const testFiles = ['test-suggestions-catalog.md', 'test-suggestions-basket.md', 'test-suggestions-ordering.md', 'test-suggestions-discount.md'];
+          const existingTestFiles = testFiles.filter(f => fs.existsSync(f));
+          if (existingTestFiles.length > 0) {
+            reviewComment += `### 🧪 Test Suggestions\n`;
+            reviewComment += `Generated test suggestions for ${existingTestFiles.length} service(s).\n\n`;
+          }
+          
+          reviewComment += `### 📎 Artifacts\n`;
+          reviewComment += `- Full analysis reports available in workflow artifacts\n`;
+          reviewComment += `- Security scan results\n`;
+          reviewComment += `- Performance recommendations\n`;
+          reviewComment += `- Implementation suggestions\n\n`;
+          
+          reviewComment += `---\n`;
+          reviewComment += `*🤖 This review was generated automatically. Please use it as guidance alongside human review.*\n`;
+          reviewComment += `*To skip AI review on future PRs, add the \`skip-ai-review\` label.*`;
+          
+          await github.rest.issues.createComment({
+            issue_number: prNumber,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: reviewComment
+          });
+          
+    - name: 🏷️ Auto-Label PR
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const prNumber = ${{ github.event.pull_request.number || inputs.pr_number }};
+          
+          const labels = [];
+          
+          // Check for security issues
+          if (fs.existsSync('security-scan-result.md')) {
+            const security = fs.readFileSync('security-scan-result.md', 'utf8');
+            if (security.includes('Critical') || security.includes('High')) {
+              labels.push('security-review-needed');
+            }
+          }
+          
+          // Check for performance concerns
+          if (fs.existsSync('performance-analysis.md')) {
+            const performance = fs.readFileSync('performance-analysis.md', 'utf8');
+            if (performance.includes('performance') || performance.includes('optimization')) {
+              labels.push('performance-impact');
+            }
+          }
+          
+          // Add general AI-reviewed label
+          labels.push('ai-reviewed');
+          
+          if (labels.length > 0) {
+            await github.rest.issues.addLabels({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: labels
+            });
+          }
+          
+    - name: 📤 Upload Review Artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ai-pr-review-${{ github.event.pull_request.number || inputs.pr_number }}
+        path: |
+          code-review-summary.md
+          security-scan-result.md
+          performance-analysis.md
+          implementation-suggestions.md
+          test-suggestions-*.md
+          pr-data.json
+        retention-days: 30
