@@ -27,6 +27,31 @@ class EShopGeminiCLI {
         this.projectRoot = path.resolve(__dirname, '../..');
     }
 
+    async generateContentWithRetry(prompt, maxRetries = 3, delay = 5000) {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`🔄 Attempt ${attempt}/${maxRetries}...`);
+                const result = await this.model.generateContent(prompt);
+                return await result.response;
+            } catch (error) {
+                console.log(`⚠️ Attempt ${attempt} failed: ${error.message}`);
+                
+                if (error.message.includes('503') || error.message.includes('overloaded')) {
+                    if (attempt < maxRetries) {
+                        console.log(`⏳ Waiting ${delay/1000} seconds before retry...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 1.5; // Exponential backoff
+                    } else {
+                        console.log('❌ All retries exhausted. API service appears to be overloaded.');
+                        throw new Error('Gemini API service is temporarily unavailable. Please try again later.');
+                    }
+                } else {
+                    throw error; // Re-throw non-503 errors immediately
+                }
+            }
+        }
+    }
+
     async analyzeProject() {
         if (this.demoMode) {
             console.log('🔍 [DEMO] Analyzing E-Shop microservices project...');
@@ -55,8 +80,7 @@ class EShopGeminiCLI {
         `;
 
         try {
-            const result = await this.model.generateContent(prompt);
-            const response = await result.response;
+            const response = await this.generateContentWithRetry(prompt);
             console.log('\n📊 Project Analysis:\n');
             console.log(response.text());
         } catch (error) {
@@ -190,7 +214,9 @@ class EShopGeminiCLI {
     }
 
     getControllers(servicePath) {
-        const controllersPath = path.join(servicePath, service + '.API', 'Controllers');
+        // Extract service name from path (e.g., "/path/to/Catalog" -> "Catalog")
+        const serviceName = path.basename(servicePath);
+        const controllersPath = path.join(servicePath, serviceName + '.API', 'Controllers');
         if (!fs.existsSync(controllersPath)) return 'No controllers found';
         
         return fs.readdirSync(controllersPath)
@@ -356,8 +382,7 @@ class EShopGeminiCLI {
                 Provide specific line numbers and fix suggestions.
                 `;
 
-                const result = await this.model.generateContent(prompt);
-                const response = await result.response;
+                const response = await this.generateContentWithRetry(prompt);
                 securityIssues.push(`\n## ${file}\n${response.text()}`);
             }
             
@@ -574,6 +599,173 @@ class EShopGeminiCLI {
         }
     }
 
+    async generateCodeForIssue(issueNumber, issueTitle, issueDescription) {
+        if (this.demoMode) {
+            console.log(`🛠️ [DEMO] Generating code for Issue #${issueNumber}...`);
+            console.log('\n🛠️ [DEMO] Code Generation Complete:\n');
+            console.log('This is a demo response. The actual generation would include:');
+            console.log('- Automatic code implementation based on issue requirements');
+            console.log('- Unit tests for the new code');
+            console.log('- Documentation updates');
+            console.log('- Configuration changes if needed');
+            console.log('\n🔑 Add a real Gemini API key to see actual AI code generation.');
+            return;
+        }
+        
+        console.log(`🛠️ Generating code for Issue #${issueNumber}: ${issueTitle}...`);
+        
+        try {
+            // Analyze the project structure to understand where code should be added
+            const projectStructure = this.getProjectStructure();
+            const existingCode = this.getRelevantExistingCode(issueTitle, issueDescription);
+            
+            const prompt = `
+            Generate code implementation for this GitHub issue in a .NET microservices e-commerce project:
+            
+            Issue #${issueNumber}: ${issueTitle}
+            Description: ${issueDescription}
+            
+            Project Structure:
+            ${projectStructure}
+            
+            Existing Related Code:
+            ${existingCode}
+            
+            Based on the issue requirements, generate:
+            1. Complete implementation with proper file structure
+            2. Unit tests using xUnit framework
+            3. Integration tests if needed
+            4. API controller methods if it's an API feature
+            5. Data models and DTOs
+            6. Repository patterns if data access is needed
+            7. Application layer handlers (CQRS pattern)
+            8. Proper error handling and validation
+            9. Documentation comments
+            10. Configuration updates if needed
+            
+            For each file, provide:
+            - Exact file path relative to project root
+            - Complete file content
+            - Explanation of the implementation
+            
+            Follow .NET best practices, SOLID principles, and the existing project architecture.
+            Use Clean Architecture, CQRS, and MediatR patterns as seen in the project.
+            `;
+
+            const result = await this.model.generateContent(prompt);
+            const response = await result.response;
+            const generatedCode = response.text();
+            
+            // Parse the response and create actual files
+            this.processGeneratedCode(generatedCode, issueNumber);
+            
+            console.log('\n🛠️ Code Generation Complete:\n');
+            console.log(generatedCode);
+            
+            return generatedCode;
+        } catch (error) {
+            console.error('❌ Error generating code for issue:', error.message);
+        }
+    }
+
+    processGeneratedCode(generatedCode, issueNumber) {
+        try {
+            // Save the full response for reference
+            fs.writeFileSync(`generated-code-issue-${issueNumber}.md`, generatedCode);
+            
+            // Try to extract file content from the response
+            const fileBlocks = this.extractFileBlocks(generatedCode);
+            
+            fileBlocks.forEach(block => {
+                const filePath = path.join(this.projectRoot, block.path);
+                const dirPath = path.dirname(filePath);
+                
+                // Create directory if it doesn't exist
+                if (!fs.existsSync(dirPath)) {
+                    fs.mkdirSync(dirPath, { recursive: true });
+                }
+                
+                // Write the file
+                fs.writeFileSync(filePath, block.content);
+                console.log(`✅ Created/Updated: ${block.path}`);
+            });
+            
+            console.log(`\n📝 Full generation details saved to: generated-code-issue-${issueNumber}.md`);
+        } catch (error) {
+            console.error('❌ Error processing generated code:', error.message);
+        }
+    }
+
+    extractFileBlocks(text) {
+        const fileBlocks = [];
+        const lines = text.split('\n');
+        let currentFile = null;
+        let currentContent = [];
+        let inCodeBlock = false;
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            
+            // Look for file path indicators
+            const filePathMatch = line.match(/(?:File:|Path:|Create file:|Update file:)\s*([^\s]+\.(cs|json|md|yml|yaml))/i);
+            if (filePathMatch) {
+                // Save previous file if exists
+                if (currentFile && currentContent.length > 0) {
+                    fileBlocks.push({
+                        path: currentFile,
+                        content: currentContent.join('\n')
+                    });
+                }
+                
+                currentFile = filePathMatch[1];
+                currentContent = [];
+                inCodeBlock = false;
+                continue;
+            }
+            
+            // Handle code blocks
+            if (line.startsWith('```')) {
+                inCodeBlock = !inCodeBlock;
+                continue;
+            }
+            
+            // Collect content if we're in a file and either in a code block or it looks like code
+            if (currentFile && (inCodeBlock || line.startsWith('using ') || line.startsWith('namespace ') || line.includes('public class'))) {
+                currentContent.push(line);
+            }
+        }
+        
+        // Save the last file
+        if (currentFile && currentContent.length > 0) {
+            fileBlocks.push({
+                path: currentFile,
+                content: currentContent.join('\n')
+            });
+        }
+        
+        return fileBlocks;
+    }
+
+    getRelevantExistingCode(issueTitle, issueDescription) {
+        try {
+            // Determine which service this issue might relate to
+            const services = ['Catalog', 'Basket', 'Ordering', 'Discount'];
+            const relevantService = services.find(service => 
+                issueTitle.toLowerCase().includes(service.toLowerCase()) ||
+                issueDescription.toLowerCase().includes(service.toLowerCase())
+            );
+            
+            if (relevantService) {
+                const servicePath = path.join(this.projectRoot, relevantService);
+                return this.getControllers(servicePath);
+            }
+            
+            return 'No specific existing code context found';
+        } catch (error) {
+            return 'Error retrieving existing code context';
+        }
+    }
+
     async advancedPRReview(prNumber, reviewType = 'comprehensive') {
         if (this.demoMode) {
             console.log(`🔬 [DEMO] Advanced PR Review #${prNumber} (${reviewType})...`);
@@ -679,6 +871,7 @@ Commands:
   security-scan                  Perform comprehensive security analysis
   performance-review             Analyze performance characteristics
   triage-issue <number>          Triage and analyze GitHub issues
+  generate <number> <title> <description>  Generate code implementation for an issue
   advanced-pr-review <number> [type]  Advanced PR review (types: comprehensive, security-focused, performance-focused, quick)
   help                           Show this help message
 
@@ -692,6 +885,7 @@ Examples:
   node gemini-cli.js security-scan
   node gemini-cli.js performance-review
   node gemini-cli.js triage-issue 456
+  node gemini-cli.js generate 13 "Add Unit Test for Basket Microservice" "Unit test is missing from basket microservice. We need to add that."
   node gemini-cli.js advanced-pr-review 123 security-focused
 
 Services: Catalog, Basket, Ordering, Discount
@@ -759,6 +953,14 @@ async function main() {
                 await cli.triageIssue(args[1]);
             } else {
                 console.error('❌ Please specify issue number');
+            }
+            break;
+        case 'generate':
+            if (args[1] && args[2] && args[3]) {
+                await cli.generateCodeForIssue(args[1], args[2], args[3]);
+            } else {
+                console.error('❌ Please specify issue number, title, and description');
+                console.error('Usage: node gemini-cli.js generate <number> <title> <description>');
             }
             break;
         case 'advanced-pr-review':
