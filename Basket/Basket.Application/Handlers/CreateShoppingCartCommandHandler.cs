@@ -11,9 +11,9 @@ namespace Basket.Application.Handlers;
 public class CreateShoppingCartCommandHandler : IRequestHandler<CreateShoppingCartCommand, ShoppingCartResponse>
 {
     private readonly IBasketRepository _basketRepository;
-    private readonly DiscountGrpcService _discountGrpcService;
+    private readonly IDiscountGrpcService _discountGrpcService;
 
-    public CreateShoppingCartCommandHandler(IBasketRepository basketRepository, DiscountGrpcService discountGrpcService)
+    public CreateShoppingCartCommandHandler(IBasketRepository basketRepository, IDiscountGrpcService discountGrpcService)
     {
         _basketRepository = basketRepository;
         _discountGrpcService = discountGrpcService;

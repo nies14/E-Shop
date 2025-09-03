@@ -35,6 +35,11 @@ public class BasketController : ApiController
     {
         var query = new GetBasketByUserNameQuery(userName);
         var basket = await _mediator.Send(query);
+        if (basket == null)
+        {
+            // Return an empty basket response instead of null
+            return Ok(new ShoppingCartResponse { UserName = userName, Items = new List<ShoppingCartItemResponse>() });
+        }
         return Ok(basket);
     }
 

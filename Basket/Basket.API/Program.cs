@@ -57,7 +57,8 @@ builder.Services.AddStackExchangeRedisCache(options =>
 //Register Application Services
 builder.Services.AddScoped<IBasketRepository, BasketRepository>();
 builder.Services.AddScoped<ICorrelationIdGenerator, CorrelationIdGenerator>();
-builder.Services.AddScoped<DiscountGrpcService>();
+// builder.Services.AddScoped<DiscountGrpcService>();
+builder.Services.AddScoped<IDiscountGrpcService, DiscountGrpcService>();
 builder.Services.AddGrpcClient<DiscountProtoService.DiscountProtoServiceClient>
     (cfg => cfg.Address = new Uri(builder.Configuration["GrpcSettings:DiscountUrl"]));
 
@@ -90,3 +91,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Make the implicit Program class public for integration tests
+public partial class Program { }
